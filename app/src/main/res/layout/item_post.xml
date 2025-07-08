@@ -5,9 +5,9 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="8dp"
-    android:background="?attr/selectableItemBackground"
     android:clickable="true"
     android:focusable="true"
+    android:foreground="?android:attr/selectableItemBackground"
     app:cardCornerRadius="8dp"
     app:cardElevation="4dp">
 
@@ -20,6 +20,7 @@
             android:id="@+id/image_user_profile"
             android:layout_width="40dp"
             android:layout_height="40dp"
+            android:contentDescription="User profile picture"
             android:src="@android:drawable/ic_menu_gallery"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -35,7 +36,7 @@
             app:layout_constraintEnd_toStartOf="@+id/text_timestamp"
             app:layout_constraintStart_toEndOf="@+id/image_user_profile"
             app:layout_constraintTop_toTopOf="@+id/image_user_profile"
-            tools:text="יוסי כהן" />
+            tools:text="John Doe" />
 
         <TextView
             android:id="@+id/text_location"
@@ -47,7 +48,7 @@
             app:layout_constraintEnd_toStartOf="@+id/text_timestamp"
             app:layout_constraintStart_toEndOf="@+id/image_user_profile"
             app:layout_constraintTop_toBottomOf="@+id/text_user_name"
-            tools:text="פארק הירקון, תל אביב" />
+            tools:text="Central Park, New York" />
 
         <TextView
             android:id="@+id/text_timestamp"
@@ -56,7 +57,7 @@
             android:textSize="12sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="@+id/image_user_profile"
-            tools:text="לפני 2 שעות" />
+            tools:text="2 hours ago" />
 
         <TextView
             android:id="@+id/text_bird_species"
@@ -68,7 +69,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/image_user_profile"
-            tools:text="זרזיר שחור" />
+            tools:text="American Robin" />
 
         <TextView
             android:id="@+id/text_description"
@@ -81,14 +82,14 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/text_bird_species"
-            tools:text="ראיתי זרזיר שחור יפהפה ליד האגם. הוא שר מלודיות מקסימות והיה מאוד פעיל." />
+            tools:text="Spotted this beautiful robin near the lake. It was singing wonderful melodies and was very active." />
 
         <ImageView
             android:id="@+id/image_post"
             android:layout_width="0dp"
             android:layout_height="200dp"
             android:layout_marginTop="12dp"
-            android:contentDescription="תמונת הפוסט"
+            android:contentDescription="Bird photo"
             android:scaleType="centerCrop"
             android:src="@android:drawable/ic_menu_gallery"
             app:layout_constraintEnd_toEndOf="parent"

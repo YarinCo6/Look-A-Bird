@@ -38,7 +38,7 @@
         android:id="@+id/text_no_posts"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="עדיין לא פרסמת פוסטים"
+        android:text="You haven't posted anything yet"
         android:textSize="18sp"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -51,7 +51,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="16dp"
-        android:contentDescription="הוסף פוסט"
+        android:contentDescription="Add Post"
         android:src="@android:drawable/ic_input_add"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />

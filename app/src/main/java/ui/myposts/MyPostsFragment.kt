@@ -1,4 +1,4 @@
-package com.example.look_a_bird.myposts
+package com.example.look_a_bird.ui.myposts
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -49,7 +49,7 @@ class MyPostsFragment : Fragment() {
         postAdapter.setOnItemClickListener(object : PostAdapter.OnItemClickListener {
             override fun onItemClick(position: Int) {
                 val post = postAdapter.getPost(position)
-                // כאן נוסיף פעולה כשלוחצים על פוסט - עריכה או צפייה
+                // Here we will add action when clicking on post - edit or view
             }
         })
 
@@ -59,14 +59,14 @@ class MyPostsFragment : Fragment() {
 
     private fun setupSwipeRefresh() {
         swipeRefresh.setOnRefreshListener {
-            // כאן נוסיף רענון הפוסטים שלי
+            // Here we will add refresh for my posts
             swipeRefresh.isRefreshing = false
         }
     }
 
     private fun setupFab() {
         fabAddPost.setOnClickListener {
-            // כאן נוסיף מעבר למסך הוספת פוסט
+            // Here we will add navigation to add post screen
         }
     }
 }

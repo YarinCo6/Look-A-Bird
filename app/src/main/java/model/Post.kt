@@ -6,6 +6,7 @@ data class Post(
     var userName: String = "",
     var userProfileImage: String = "",
     var birdSpecies: String = "",
+    var scientificName: String = "",
     var description: String = "",
     var imageUrl: String = "",
     var latitude: Double = 0.0,

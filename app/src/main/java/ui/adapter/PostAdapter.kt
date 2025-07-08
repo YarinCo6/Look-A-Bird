@@ -65,23 +65,29 @@ class PostAdapter : RecyclerView.Adapter<PostAdapter.PostViewHolder>() {
         fun bind(post: Post) {
             textUserName.text = post.userName
             textLocation.text = post.location
-            textBirdSpecies.text = post.birdSpecies
             textDescription.text = post.description
             textTimestamp.text = formatTimestamp(post.timestamp)
+
+            // Display scientific name if available
+            if (post.scientificName.isNotEmpty()) {
+                textBirdSpecies.text = "${post.birdSpecies} (${post.scientificName})"
+            } else {
+                textBirdSpecies.text = post.birdSpecies
+            }
         }
 
         private fun formatTimestamp(timestamp: Long): String {
             return if (timestamp == 0L) {
-                "עכשיו"
+                "Now"
             } else {
                 val now = System.currentTimeMillis() / 1000
                 val diff = now - (timestamp / 1000)
 
                 when {
-                    diff < 60 -> "עכשיו"
-                    diff < 3600 -> "לפני ${diff / 60} דקות"
-                    diff < 86400 -> "לפני ${diff / 3600} שעות"
-                    diff < 604800 -> "לפני ${diff / 86400} ימים"
+                    diff < 60 -> "Now"
+                    diff < 3600 -> "${diff / 60} minutes ago"
+                    diff < 86400 -> "${diff / 3600} hours ago"
+                    diff < 604800 -> "${diff / 86400} days ago"
                     else -> {
                         val date = Date(timestamp)
                         SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(date)
