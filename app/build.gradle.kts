@@ -7,12 +7,12 @@ apply(plugin = "androidx.navigation.safeargs.kotlin")
 
 android {
     namespace = "com.example.look_a_bird"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.look_a_bird"
-        minSdk = 24
-        targetSdk = 35
+        minSdk = 26
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
