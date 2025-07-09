@@ -15,6 +15,10 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
+import android.widget.Toast
+import com.google.android.material.floatingactionbutton.FloatingActionButton
+import androidx.navigation.fragment.findNavController
+
 
 
 class MapFragment : Fragment(), OnMapReadyCallback {
@@ -35,12 +39,42 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         val mapFragment = childFragmentManager
             .findFragmentById(R.id.mapFragment) as SupportMapFragment
         mapFragment.getMapAsync(this)
+
+        view.findViewById<FloatingActionButton>(R.id.button_add_post).setOnClickListener {
+            openAddPost()
+        }
+
     }
 
     override fun onMapReady(map: GoogleMap) {
         googleMap = map
         enableMyLocation()
     }
+
+    private fun openAddPost() {
+        val fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
+
+        if (ContextCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED) {
+
+            fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                if (location != null) {
+                    val action = MapFragmentDirections.actionMapFragmentToAddPostFragment(
+                        latitude = location.latitude.toFloat(),
+                        longitude = location.longitude.toFloat()
+                    )
+                    findNavController().navigate(action)
+                } else {
+                    Toast.makeText(context, "Could not get current location", Toast.LENGTH_SHORT).show()
+                }
+            }
+        } else {
+            Toast.makeText(context, "Location permission not granted", Toast.LENGTH_SHORT).show()
+        }
+    }
+
 
     private fun enableMyLocation() {
         if (ContextCompat.checkSelfPermission(

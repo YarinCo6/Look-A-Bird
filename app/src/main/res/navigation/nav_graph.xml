@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/mapFragment">
+
+    <fragment
+        android:id="@+id/mapFragment"
+        android:name="com.example.look_a_bird.MapFragment"
+        android:label="Map">
+        <action
+            android:id="@+id/action_mapFragment_to_addPostFragment"
+            app:destination="@id/addPostFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/addPostFragment"
+        android:name="com.example.look_a_bird.AddPostFragment"
+        android:label="Add Post">
+        <argument
+            android:name="latitude"
+            app:argType="float"
+            android:defaultValue="0.0"/>
+        <argument
+            android:name="longitude"
+            app:argType="float"
+            android:defaultValue="0.0"/>
+    </fragment>
+</navigation>
