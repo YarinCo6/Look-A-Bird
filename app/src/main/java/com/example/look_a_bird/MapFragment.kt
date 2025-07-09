@@ -7,24 +7,32 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
-import android.widget.Toast
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import androidx.navigation.fragment.findNavController
-
-
+import androidx.activity.result.contract.ActivityResultContracts
 
 class MapFragment : Fragment(), OnMapReadyCallback {
 
     private lateinit var googleMap: GoogleMap
-    private val locationPermissionRequestCode = 1001
+
+    private val locationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            enableMyLocation()
+        } else {
+            Toast.makeText(context, "Location permission denied", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -43,38 +51,12 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         view.findViewById<FloatingActionButton>(R.id.button_add_post).setOnClickListener {
             openAddPost()
         }
-
     }
 
     override fun onMapReady(map: GoogleMap) {
         googleMap = map
         enableMyLocation()
     }
-
-    private fun openAddPost() {
-        val fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
-
-        if (ContextCompat.checkSelfPermission(
-                requireContext(),
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED) {
-
-            fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                if (location != null) {
-                    val action = MapFragmentDirections.actionMapFragmentToAddPostFragment(
-                        latitude = location.latitude.toFloat(),
-                        longitude = location.longitude.toFloat()
-                    )
-                    findNavController().navigate(action)
-                } else {
-                    Toast.makeText(context, "Could not get current location", Toast.LENGTH_SHORT).show()
-                }
-            }
-        } else {
-            Toast.makeText(context, "Location permission not granted", Toast.LENGTH_SHORT).show()
-        }
-    }
-
 
     private fun enableMyLocation() {
         if (ContextCompat.checkSelfPermission(
@@ -85,10 +67,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             googleMap.isMyLocationEnabled = true
             centerMapOnLastLocation()
         } else {
-            requestPermissions(
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                locationPermissionRequestCode
-            )
+            locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
         }
     }
 
@@ -98,7 +77,6 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 Manifest.permission.ACCESS_FINE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
         ) {
-            // Permission not granted, don't proceed.
             return
         }
 
@@ -116,17 +94,27 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             }
     }
 
+    private fun openAddPost() {
+        val fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == locationPermissionRequestCode) {
-            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                enableMyLocation()
+        if (ContextCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                if (location != null) {
+                    val action = MapFragmentDirections.actionMapFragmentToAddPostFragment(
+                        latitude = location.latitude.toFloat(),
+                        longitude = location.longitude.toFloat()
+                    )
+                    findNavController().navigate(action)
+                } else {
+                    Toast.makeText(context, "Could not get current location", Toast.LENGTH_SHORT).show()
+                }
             }
+        } else {
+            Toast.makeText(context, "Location permission not granted", Toast.LENGTH_SHORT).show()
         }
     }
 }
