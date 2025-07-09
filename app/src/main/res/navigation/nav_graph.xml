@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/loginFragment">
+
+    <!-- Login Fragment - Starting point -->
+    <fragment
+        android:id="@+id/loginFragment"
+        android:name="com.example.look_a_bird.ui.auth.LoginFragment"
+        android:label="Login"
+        tools:layout="@layout/fragment_login">
+
+        <action
+            android:id="@+id/action_login_to_register"
+            app:destination="@id/registerFragment" />
+
+        <action
+            android:id="@+id/action_login_to_home"
+            app:destination="@id/homeFragment"
+            app:popUpTo="@id/nav_graph"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+    <!-- Register Fragment -->
+    <fragment
+        android:id="@+id/registerFragment"
+        android:name="com.example.look_a_bird.ui.auth.RegisterFragment"
+        android:label="Register"
+        tools:layout="@layout/fragment_register">
+
+        <action
+            android:id="@+id/action_register_to_login"
+            app:destination="@id/loginFragment"
+            app:popUpTo="@id/loginFragment"
+            app:popUpToInclusive="true" />
+
+        <action
+            android:id="@+id/action_register_to_home"
+            app:destination="@id/homeFragment"
+            app:popUpTo="@id/nav_graph"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+    <!-- Home Fragment - Main screen -->
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.example.look_a_bird.ui.home.HomeFragment"
+        android:label="Home"
+        tools:layout="@layout/fragment_home">
+
+        <action
+            android:id="@+id/action_home_to_add_post"
+            app:destination="@id/addPostFragment" />
+
+        <action
+            android:id="@+id/action_home_to_profile"
+            app:destination="@id/profileFragment" />
+    </fragment>
+
+    <!-- My Posts Fragment -->
+    <fragment
+        android:id="@+id/myPostsFragment"
+        android:name="com.example.look_a_bird.ui.myposts.MyPostsFragment"
+        android:label="My Posts"
+        tools:layout="@layout/fragment_my_posts">
+
+        <action
+            android:id="@+id/action_my_posts_to_edit_post"
+            app:destination="@id/editPostFragment">
+
+            <!-- Safe Args - pass post ID -->
+            <argument
+                android:name="postId"
+                app:argType="string" />
+        </action>
+
+        <action
+            android:id="@+id/action_my_posts_to_add_post"
+            app:destination="@id/addPostFragment" />
+    </fragment>
+
+    <!-- Add Post Fragment -->
+    <fragment
+        android:id="@+id/addPostFragment"
+        android:name="com.example.look_a_bird.ui.addpost.AddPostFragment"
+        android:label="Add Post"
+        tools:layout="@layout/fragment_add_post">
+
+        <!-- No specific actions needed - will navigate back after saving -->
+    </fragment>
+
+    <!-- Edit Post Fragment -->
+    <fragment
+        android:id="@+id/editPostFragment"
+        android:name="com.example.look_a_bird.ui.editpost.EditPostFragment"
+        android:label="Edit Post"
+        tools:layout="@layout/fragment_edit_post">
+
+        <!-- Arguments this fragment receives -->
+        <argument
+            android:name="postId"
+            app:argType="string"
+            android:defaultValue="" />
+    </fragment>
+
+    <!-- Profile Fragment -->
+    <fragment
+        android:id="@+id/profileFragment"
+        android:name="com.example.look_a_bird.ui.profile.ProfileFragment"
+        android:label="Profile"
+        tools:layout="@layout/fragment_profile">
+
+        <action
+            android:id="@+id/action_profile_to_edit_profile"
+            app:destination="@id/editProfileFragment" />
+
+        <action
+            android:id="@+id/action_profile_to_my_posts"
+            app:destination="@id/myPostsFragment" />
+    </fragment>
+
+    <!-- Edit Profile Fragment -->
+    <fragment
+        android:id="@+id/editProfileFragment"
+        android:name="com.example.look_a_bird.ui.profile.EditProfileFragment"
+        android:label="Edit Profile"
+        tools:layout="@layout/fragment_edit_profile">
+
+        <!-- No specific actions needed - will navigate back after saving -->
+    </fragment>
+
+    <!-- Global Actions - accessible from anywhere -->
+    <action
+        android:id="@+id/action_global_home"
+        app:destination="@id/homeFragment" />
+
+    <action
+        android:id="@+id/action_global_my_posts"
+        app:destination="@id/myPostsFragment" />
+
+    <action
+        android:id="@+id/action_global_profile"
+        app:destination="@id/profileFragment" />
+
+    <action
+        android:id="@+id/action_global_logout"
+        app:destination="@id/loginFragment"
+        app:popUpTo="@id/nav_graph"
+        app:popUpToInclusive="true" />
+
+</navigation>

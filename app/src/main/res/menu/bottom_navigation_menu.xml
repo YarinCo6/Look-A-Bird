@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Home Tab -->
+    <item
+        android:id="@+id/homeFragment"
+        android:icon="@android:drawable/ic_menu_view"
+        android:title="Home" />
+
+    <!-- My Posts Tab -->
+    <item
+        android:id="@+id/myPostsFragment"
+        android:icon="@android:drawable/ic_menu_my_calendar"
+        android:title="My Posts" />
+
+    <!-- Add Post Tab -->
+    <item
+        android:id="@+id/addPostFragment"
+        android:icon="@android:drawable/ic_menu_add"
+        android:title="Add Post" />
+
+    <!-- Profile Tab -->
+    <item
+        android:id="@+id/profileFragment"
+        android:icon="@android:drawable/ic_menu_manage"
+        android:title="Profile" />
+
+</menu>

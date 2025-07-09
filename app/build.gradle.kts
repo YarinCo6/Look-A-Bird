@@ -1,7 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    // הסרנו את kotlin-kapt
+    id("androidx.navigation.safeargs.kotlin")
 }
 
 android {
