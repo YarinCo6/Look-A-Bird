@@ -1,17 +1,17 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("kotlin-kapt")
+    // הסרנו את kotlin-kapt
 }
 
 android {
     namespace = "com.example.look_a_bird"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.look_a_bird"
-        minSdk = 24
-        targetSdk = 34
+        minSdk = 26
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
@@ -53,11 +53,7 @@ dependencies {
     implementation("androidx.navigation:navigation-fragment-ktx:$navVersion")
     implementation("androidx.navigation:navigation-ui-ktx:$navVersion")
 
-    // Room Database
-    val roomVersion = "2.7.2"
-    implementation("androidx.room:room-runtime:$roomVersion")
-    implementation("androidx.room:room-ktx:$roomVersion")
-    kapt("androidx.room:room-compiler:$roomVersion")
+    // הסרנו את Room Database dependencies
 
     // ViewModel and LiveData
     val lifecycleVersion = "2.9.1"
@@ -69,6 +65,10 @@ dependencies {
 
     // Swipe to Refresh
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
+
+    // Firebase (להוספה מאוחר יותר)
+    // implementation("com.google.firebase:firebase-firestore:24.10.3")
+    // implementation("com.google.firebase:firebase-auth:22.3.1")
 
     // Testing
     testImplementation("junit:junit:4.13.2")

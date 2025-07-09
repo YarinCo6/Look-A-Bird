@@ -9,8 +9,8 @@ data class Post(
     var scientificName: String = "",
     var description: String = "",
     var imageUrl: String = "",
-    var latitude: Double = 0.0,
-    var longitude: Double = 0.0,
+    var latitude: Float = 0.0f,
+    var longitude: Float = 0.0f,
     var location: String = "",
     var timestamp: Long = 0L
 )

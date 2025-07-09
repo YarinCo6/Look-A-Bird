@@ -102,8 +102,8 @@ class AddPostFragment : Fragment() {
             scientificName = scientificName,
             description = description,
             imageUrl = selectedImageUri,
-            latitude = 0.0, // Will get from GPS
-            longitude = 0.0, // Will get from GPS
+            latitude = 0.0f, // Changed to Float - will get from GPS
+            longitude = 0.0f, // Changed to Float - will get from GPS
             location = location,
             timestamp = System.currentTimeMillis()
         )
@@ -115,6 +115,12 @@ class AddPostFragment : Fragment() {
     private fun validateInput(birdName: String, description: String, location: String): Boolean {
         if (birdName.isEmpty()) {
             editTextBirdName.error = "Bird name is required"
+            return false
+        }
+
+        // Validate bird name contains only letters and spaces
+        if (!birdName.matches(Regex("^[a-zA-Z\\s]+$"))) {
+            editTextBirdName.error = "Bird name can only contain letters and spaces"
             return false
         }
 

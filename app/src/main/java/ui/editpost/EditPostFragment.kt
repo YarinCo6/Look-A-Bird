@@ -104,7 +104,7 @@ class EditPostFragment : Fragment() {
         view?.postDelayed({
             showLoading(false)
 
-            // Create sample post for testing
+            // Create sample post for testing - GPS coordinates will use default Float values
             currentPost = Post(
                 id = postId,
                 userId = "current_user_id",
@@ -114,6 +114,8 @@ class EditPostFragment : Fragment() {
                 description = "Beautiful bird spotted in the park",
                 location = "Central Park, New York",
                 imageUrl = "",
+                latitude = 40.785091f, // Float GPS coordinate
+                longitude = -73.968285f, // Float GPS coordinate
                 timestamp = System.currentTimeMillis()
             )
 
@@ -197,6 +199,12 @@ class EditPostFragment : Fragment() {
     private fun validateInput(birdName: String, description: String, location: String): Boolean {
         if (birdName.isEmpty()) {
             editTextBirdName.error = "Bird name is required"
+            return false
+        }
+
+        // Validate bird name contains only letters and spaces
+        if (!birdName.matches(Regex("^[a-zA-Z\\s]+$"))) {
+            editTextBirdName.error = "Bird name can only contain letters and spaces"
             return false
         }
 
