@@ -55,8 +55,6 @@ dependencies {
     implementation("androidx.navigation:navigation-fragment-ktx:$navVersion")
     implementation("androidx.navigation:navigation-ui-ktx:$navVersion")
 
-    // הסרנו את Room Database dependencies
-
     // ViewModel and LiveData
     val lifecycleVersion = "2.9.1"
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycleVersion")
@@ -68,18 +66,25 @@ dependencies {
     // Swipe to Refresh
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
 
-    // Firebase (להוספה מאוחר יותר)
+    // Firebase
     implementation("com.google.firebase:firebase-auth-ktx:22.3.0")
     // implementation("com.google.firebase:firebase-firestore:24.10.3")
     // implementation("com.google.firebase:firebase-auth:22.3.1")
+
+    // Networking for iNaturalist API
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
+
+    // JSON parsing
+    implementation("com.google.code.gson:gson:2.10.1")
 
     // Testing
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 
-    //Mapping
+    // Mapping
     implementation("com.google.android.gms:play-services-maps:18.2.0")
     implementation("com.google.android.gms:play-services-location:21.0.1")
-
 }
