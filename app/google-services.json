@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "326958855167",
+    "project_id": "look-a-bird-a1d9b",
+    "storage_bucket": "look-a-bird-a1d9b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:326958855167:android:f1eda8aa56215190642dca",
+        "android_client_info": {
+          "package_name": "com.example.look_a_bird"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCVzaMYG3DRAy5jeWvLA67IFvu9Y5i_Ol0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
