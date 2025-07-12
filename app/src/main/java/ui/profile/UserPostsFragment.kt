@@ -1,6 +1,8 @@
 package com.example.look_a_bird.ui.profile
 
+import Post
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -13,9 +15,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.example.look_a_bird.R
-import com.example.look_a_bird.model.Post
 import com.example.look_a_bird.ui.adapter.PostAdapter
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
@@ -24,9 +24,9 @@ class UserPostsFragment : Fragment() {
 
     private lateinit var recyclerView: RecyclerView
     private lateinit var swipeRefresh: SwipeRefreshLayout
-    private lateinit var fabAddPost: FloatingActionButton
     private lateinit var progressBar: ProgressBar
     private lateinit var textNoPosts: TextView
+    private lateinit var textPostCount: TextView
     private lateinit var postAdapter: PostAdapter
 
     private val db = FirebaseFirestore.getInstance()
@@ -46,18 +46,15 @@ class UserPostsFragment : Fragment() {
         setupViews(view)
         setupRecyclerView()
         setupSwipeRefresh()
-        setupFab()
-
-        // Load user's posts on start
         loadUserPosts()
     }
 
     private fun setupViews(view: View) {
         recyclerView = view.findViewById(R.id.recycler_view_user_posts)
         swipeRefresh = view.findViewById(R.id.swipe_refresh)
-        fabAddPost = view.findViewById(R.id.fab_add_post)
         progressBar = view.findViewById(R.id.progress_bar)
         textNoPosts = view.findViewById(R.id.text_no_posts)
+        textPostCount = view.findViewById(R.id.text_post_count)
     }
 
     private fun setupRecyclerView() {
@@ -65,9 +62,13 @@ class UserPostsFragment : Fragment() {
 
         postAdapter.setOnItemClickListener(object : PostAdapter.OnItemClickListener {
             override fun onItemClick(position: Int) {
-                val post = postAdapter.getPost(position)
-                // Navigate to edit post (since these are user's own posts)
-                navigateToEditPost(post)
+                val postPair = postAdapter.getPost(position)
+                val post = postPair.second
+                Toast.makeText(context, "Clicked: ${post.birdSpecies}", Toast.LENGTH_SHORT).show()
+            }
+
+            override fun onMapClick(latitude: Double, longitude: Double) {
+                Toast.makeText(context, "Lat: $latitude, Lon: $longitude", Toast.LENGTH_SHORT).show()
             }
         })
 
@@ -75,20 +76,10 @@ class UserPostsFragment : Fragment() {
         recyclerView.adapter = postAdapter
     }
 
+
     private fun setupSwipeRefresh() {
         swipeRefresh.setOnRefreshListener {
             loadUserPosts()
-        }
-    }
-
-    private fun setupFab() {
-        fabAddPost.setOnClickListener {
-            // Navigate to Add Post screen
-            try {
-                findNavController().navigate(R.id.addPostFragment)
-            } catch (e: Exception) {
-                Toast.makeText(context, "Navigation error", Toast.LENGTH_SHORT).show()
-            }
         }
     }
 
@@ -106,14 +97,14 @@ class UserPostsFragment : Fragment() {
             .orderBy("timestamp", Query.Direction.DESCENDING)
             .get()
             .addOnSuccessListener { documents ->
-                val posts = mutableListOf<Post>()
+                val posts = mutableListOf<Pair<String, Post>>()
 
                 for (document in documents) {
                     try {
                         val post = document.toObject(Post::class.java)
-                        post.id = document.id
-                        posts.add(post)
+                        posts.add(Pair(document.id, post))
                     } catch (e: Exception) {
+                        Log.e("Firestore", "Error parsing post: ${e.message}")
                         continue
                     }
                 }
@@ -123,22 +114,24 @@ class UserPostsFragment : Fragment() {
                 swipeRefresh.isRefreshing = false
             }
             .addOnFailureListener { exception ->
-                Toast.makeText(context, "Error loading your posts: ${exception.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Error loading posts: ${exception.message}", Toast.LENGTH_SHORT).show()
                 showLoading(false)
                 swipeRefresh.isRefreshing = false
                 updateUI(emptyList())
             }
     }
 
-    private fun updateUI(posts: List<Post>) {
+    private fun updateUI(posts: List<Pair<String, Post>>) {
         if (posts.isEmpty()) {
             textNoPosts.visibility = View.VISIBLE
-            textNoPosts.text = "You haven't posted any bird sightings yet.\nTap + to share your first sighting!"
             recyclerView.visibility = View.GONE
+            textPostCount.visibility = View.GONE
         } else {
             textNoPosts.visibility = View.GONE
             recyclerView.visibility = View.VISIBLE
-            postAdapter.setPosts(posts) // FIXED: Use setPosts() instead of updatePosts()
+            textPostCount.visibility = View.VISIBLE
+            textPostCount.text = "No. of posts: ${posts.size}" // <-- NEW
+            postAdapter.setPosts(posts)
         }
     }
 
@@ -146,13 +139,13 @@ class UserPostsFragment : Fragment() {
         progressBar.visibility = if (show) View.VISIBLE else View.GONE
     }
 
-    private fun navigateToEditPost(post: Post) {
+    private fun navigateToEditPost(postPair: Pair<String, Post>) {
+        val postId = postPair.first
         try {
-            // Navigate to Edit Post with Safe Args
-            val action = UserPostsFragmentDirections.actionUserPostsToEditPost(post.id)
+            val action = UserPostsFragmentDirections.actionUserPostsToEditPost(postId)
             findNavController().navigate(action)
         } catch (e: Exception) {
-            Toast.makeText(context, "Edit functionality coming soon!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Navigation error: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
 }

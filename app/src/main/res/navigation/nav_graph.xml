@@ -75,6 +75,10 @@
                 android:name="postId"
                 app:argType="string" />
         </action>
+        <action
+            android:id="@+id/actionMyPostsToPostMap"
+            app:destination="@id/postMapFragment" />
+
 
         <action
             android:id="@+id/action_my_posts_to_add_post"
@@ -190,5 +194,20 @@
         app:destination="@id/loginFragment"
         app:popUpTo="@id/nav_graph"
         app:popUpToInclusive="true" />
+
+    <!--Show on map -->
+    <fragment
+        android:id="@+id/postMapFragment"
+        android:name="com.example.look_a_bird.ui.map.PostMapFragment"
+        android:label="PostMapFragment">
+        <argument
+            android:name="latitude"
+            app:argType="float" />
+        <argument
+            android:name="longitude"
+            app:argType="float" />
+    </fragment>
+
+
 
 </navigation>

@@ -4,12 +4,12 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.example.look_a_bird.R
-import com.example.look_a_bird.model.Post
 import com.example.look_a_bird.ui.adapter.PostAdapter
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 
@@ -27,6 +27,9 @@ class HomeFragment : Fragment() {
     ): View? {
         return inflater.inflate(R.layout.fragment_home, container, false)
     }
+
+
+
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -51,11 +54,18 @@ class HomeFragment : Fragment() {
                 val post = postAdapter.getPost(position)
                 // כאן נוסיף פעולה כשלוחצים על פוסט
             }
+
+            override fun onMapClick(latitude: Double, longitude: Double) {
+                // For example, just show a toast:
+                Toast.makeText(context, "Lat: $latitude, Lon: $longitude", Toast.LENGTH_SHORT).show()
+            }
+
         })
 
         recyclerView.layoutManager = LinearLayoutManager(context)
         recyclerView.adapter = postAdapter
     }
+
 
     private fun setupSwipeRefresh() {
         swipeRefresh.setOnRefreshListener {

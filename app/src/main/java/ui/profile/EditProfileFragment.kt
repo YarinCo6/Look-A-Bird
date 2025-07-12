@@ -14,6 +14,7 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
+import com.bumptech.glide.Glide
 import com.example.look_a_bird.R
 import com.example.look_a_bird.model.User
 import com.google.android.material.textfield.TextInputEditText
@@ -21,7 +22,6 @@ import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
-import com.squareup.picasso.Picasso
 import java.util.*
 
 class EditProfileFragment : Fragment() {
@@ -30,14 +30,12 @@ class EditProfileFragment : Fragment() {
     private lateinit var buttonChangePicture: Button
     private lateinit var editTextName: TextInputEditText
     private lateinit var editTextEmail: TextInputEditText
-    // ADDED: Password fields
     private lateinit var editTextCurrentPassword: TextInputEditText
     private lateinit var editTextNewPassword: TextInputEditText
     private lateinit var buttonCancel: Button
     private lateinit var buttonSave: Button
     private lateinit var progressBar: ProgressBar
 
-    // Firebase
     private val auth = FirebaseAuth.getInstance()
     private val db = FirebaseFirestore.getInstance()
     private val storage = FirebaseStorage.getInstance()
@@ -46,7 +44,6 @@ class EditProfileFragment : Fragment() {
     private var selectedImageUri: Uri? = null
     private var isImageChanged = false
 
-    // Image picker launcher
     private val imagePickerLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -54,10 +51,11 @@ class EditProfileFragment : Fragment() {
             result.data?.data?.let { uri ->
                 selectedImageUri = uri
                 isImageChanged = true
-                // Display selected image
-                Picasso.get()
+                // Display selected image with Glide
+                Glide.with(this)
                     .load(uri)
                     .placeholder(android.R.drawable.ic_menu_gallery)
+                    .circleCrop()
                     .into(imageProfile)
             }
         }
@@ -84,7 +82,6 @@ class EditProfileFragment : Fragment() {
         buttonChangePicture = view.findViewById(R.id.button_change_picture)
         editTextName = view.findViewById(R.id.edit_text_name)
         editTextEmail = view.findViewById(R.id.edit_text_email)
-        // ADDED: Password fields
         editTextCurrentPassword = view.findViewById(R.id.edit_text_current_password)
         editTextNewPassword = view.findViewById(R.id.edit_text_new_password)
         buttonCancel = view.findViewById(R.id.button_cancel)
@@ -102,7 +99,6 @@ class EditProfileFragment : Fragment() {
             return
         }
 
-        // Load from Firestore
         db.collection("users").document(firebaseUser.uid)
             .get()
             .addOnSuccessListener { document ->
@@ -136,9 +132,6 @@ class EditProfileFragment : Fragment() {
                 email = firebaseUser.email ?: "",
                 profileImageUrl = firebaseUser.photoUrl?.toString() ?: "",
                 memberSince = firebaseUser.metadata?.creationTimestamp ?: System.currentTimeMillis(),
-                postsCount = 0,
-                speciesCount = 0,
-                locationsCount = 0
             )
             populateFields()
         }
@@ -149,12 +142,12 @@ class EditProfileFragment : Fragment() {
             editTextName.setText(user.name)
             editTextEmail.setText(user.email)
 
-            // Load profile image
             if (user.profileImageUrl.isNotEmpty()) {
-                Picasso.get()
+                Glide.with(this)
                     .load(user.profileImageUrl)
                     .placeholder(android.R.drawable.ic_menu_gallery)
                     .error(android.R.drawable.ic_menu_gallery)
+                    .circleCrop()
                     .into(imageProfile)
             }
         }
@@ -187,24 +180,20 @@ class EditProfileFragment : Fragment() {
         val currentPassword = editTextCurrentPassword.text.toString().trim()
         val newPassword = editTextNewPassword.text.toString().trim()
 
-        // Validation
         if (!validateInputs(newName, newEmail, currentPassword, newPassword)) {
             return
         }
 
         showLoading(true)
 
-        // If password is being changed, verify current password first
         if (newPassword.isNotEmpty()) {
             verifyAndUpdatePassword(newName, newEmail, currentPassword, newPassword)
         } else {
-            // Just update profile without password change
             updateProfile(newName, newEmail)
         }
     }
 
     private fun validateInputs(name: String, email: String, currentPassword: String, newPassword: String): Boolean {
-        // Name validation
         if (name.isEmpty()) {
             editTextName.error = "Name cannot be empty"
             editTextName.requestFocus()
@@ -217,7 +206,6 @@ class EditProfileFragment : Fragment() {
             return false
         }
 
-        // Email validation
         if (email.isEmpty()) {
             editTextEmail.error = "Email cannot be empty"
             editTextEmail.requestFocus()
@@ -230,7 +218,6 @@ class EditProfileFragment : Fragment() {
             return false
         }
 
-        // Password validation
         if (newPassword.isNotEmpty()) {
             if (currentPassword.isEmpty()) {
                 editTextCurrentPassword.error = "Current password required to change password"
@@ -256,14 +243,11 @@ class EditProfileFragment : Fragment() {
             return
         }
 
-        // Re-authenticate user
         val credential = EmailAuthProvider.getCredential(user.email!!, currentPassword)
         user.reauthenticate(credential)
             .addOnSuccessListener {
-                // Update password
                 user.updatePassword(newPassword)
                     .addOnSuccessListener {
-                        // Password updated, now update profile
                         updateProfile(name, email)
                     }
                     .addOnFailureListener { exception ->
@@ -271,7 +255,7 @@ class EditProfileFragment : Fragment() {
                         Toast.makeText(context, "Error updating password: ${exception.message}", Toast.LENGTH_LONG).show()
                     }
             }
-            .addOnFailureListener { exception ->
+            .addOnFailureListener {
                 showLoading(false)
                 editTextCurrentPassword.error = "Current password is incorrect"
                 editTextCurrentPassword.requestFocus()
@@ -286,11 +270,9 @@ class EditProfileFragment : Fragment() {
             return
         }
 
-        // Update email if changed
         if (email != user.email) {
             user.updateEmail(email)
                 .addOnSuccessListener {
-                    // Email updated, continue with other updates
                     updateFirestoreAndStorage(name, email)
                 }
                 .addOnFailureListener { exception ->
@@ -298,17 +280,14 @@ class EditProfileFragment : Fragment() {
                     Toast.makeText(context, "Error updating email: ${exception.message}", Toast.LENGTH_LONG).show()
                 }
         } else {
-            // Email not changed, continue with other updates
             updateFirestoreAndStorage(name, email)
         }
     }
 
     private fun updateFirestoreAndStorage(name: String, email: String) {
         if (isImageChanged && selectedImageUri != null) {
-            // Upload new image first
             uploadImageAndUpdateProfile(name, email)
         } else {
-            // Update profile without image change
             updateFirestoreProfile(name, email, currentUser?.profileImageUrl ?: "")
         }
     }
@@ -325,13 +304,12 @@ class EditProfileFragment : Fragment() {
             .child("${user.uid}_${UUID.randomUUID()}.jpg")
 
         imageRef.putFile(selectedImageUri!!)
-            .addOnSuccessListener { taskSnapshot ->
+            .addOnSuccessListener {
                 imageRef.downloadUrl.addOnSuccessListener { downloadUrl ->
                     updateFirestoreProfile(name, email, downloadUrl.toString())
                 }
             }
-            .addOnFailureListener { exception ->
-                // Continue without image update
+            .addOnFailureListener {
                 Toast.makeText(context, "Image upload failed, profile updated without image", Toast.LENGTH_SHORT).show()
                 updateFirestoreProfile(name, email, currentUser?.profileImageUrl ?: "")
             }
@@ -354,9 +332,6 @@ class EditProfileFragment : Fragment() {
             email = email,
             profileImageUrl = imageUrl,
             memberSince = user.metadata?.creationTimestamp ?: System.currentTimeMillis(),
-            postsCount = 0,
-            speciesCount = 0,
-            locationsCount = 0
         )
 
         db.collection("users").document(user.uid)

@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="8dp"
     android:clickable="true"
     android:focusable="true"
-    android:foreground="?android:attr/selectableItemBackground"
+    android:foreground="?attr/selectableItemBackground"
     app:cardCornerRadius="8dp"
     app:cardElevation="4dp">
 
@@ -16,86 +15,99 @@
         android:layout_height="wrap_content"
         android:padding="12dp">
 
+        <!-- Profile picture -->
         <ImageView
             android:id="@+id/image_user_profile"
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:contentDescription="User profile picture"
-            android:src="@android:drawable/ic_menu_gallery"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
+        <!-- Username -->
         <TextView
             android:id="@+id/text_user_name"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
-            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
             android:textSize="16sp"
             android:textStyle="bold"
-            app:layout_constraintEnd_toStartOf="@+id/text_timestamp"
-            app:layout_constraintStart_toEndOf="@+id/image_user_profile"
-            app:layout_constraintTop_toTopOf="@+id/image_user_profile"
-            tools:text="John Doe" />
+            android:textColor="@android:color/black"
+            app:layout_constraintStart_toEndOf="@id/image_user_profile"
+            app:layout_constraintTop_toTopOf="@id/image_user_profile"
+            app:layout_constraintBottom_toBottomOf="@id/image_user_profile"
+            app:layout_constraintEnd_toStartOf="@id/text_timestamp" />
 
-        <TextView
-            android:id="@+id/text_location"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
-            android:layout_marginEnd="8dp"
-            android:textSize="12sp"
-            app:layout_constraintEnd_toStartOf="@+id/text_timestamp"
-            app:layout_constraintStart_toEndOf="@+id/image_user_profile"
-            app:layout_constraintTop_toBottomOf="@+id/text_user_name"
-            tools:text="Central Park, New York" />
-
+        <!-- Timestamp -->
         <TextView
             android:id="@+id/text_timestamp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="12sp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/image_user_profile"
-            tools:text="2 hours ago" />
+            android:textColor="@android:color/black"
+            app:layout_constraintTop_toTopOf="@id/image_user_profile"
+            app:layout_constraintBottom_toBottomOf="@id/image_user_profile"
+            app:layout_constraintEnd_toEndOf="parent" />
 
-        <TextView
-            android:id="@+id/text_bird_species"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/image_user_profile"
-            tools:text="American Robin" />
-
-        <TextView
-            android:id="@+id/text_description"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:maxLines="3"
-            android:ellipsize="end"
-            android:textSize="14sp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/text_bird_species"
-            tools:text="Spotted this beautiful robin near the lake. It was singing wonderful melodies and was very active." />
-
+        <!-- Post image -->
         <ImageView
             android:id="@+id/image_post"
             android:layout_width="0dp"
             android:layout_height="200dp"
             android:layout_marginTop="12dp"
-            android:contentDescription="Bird photo"
             android:scaleType="centerCrop"
-            android:src="@android:drawable/ic_menu_gallery"
-            app:layout_constraintEnd_toEndOf="parent"
+            android:contentDescription="Bird photo"
+            app:layout_constraintTop_toBottomOf="@id/image_user_profile"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/text_description" />
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <!-- Bird species -->
+        <TextView
+            android:id="@+id/text_bird_species"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/black"
+            app:layout_constraintTop_toBottomOf="@id/image_post"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/button_show_on_map" />
+
+        <!-- Show on Map button -->
+        <Button
+            android:id="@+id/button_show_on_map"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            android:text="Show on Map"
+            android:textSize="12sp"
+            app:layout_constraintTop_toTopOf="@id/text_bird_species"
+            app:layout_constraintBottom_toBottomOf="@id/text_bird_species"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <!-- Scientific name -->
+        <TextView
+            android:id="@+id/text_scientific_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:textColor="#666"
+            app:layout_constraintTop_toBottomOf="@id/text_bird_species"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <!-- Description -->
+        <TextView
+            android:id="@+id/text_description"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textSize="14sp"
+            app:layout_constraintTop_toBottomOf="@id/text_scientific_name"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
-
 </com.google.android.material.card.MaterialCardView>

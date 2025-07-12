@@ -54,7 +54,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
-            android:hint="🔍 Search Bird Name"
+            android:hint="Search Bird Name"
             app:helperText="Type to search from iNaturalist database"
             app:helperTextEnabled="true"
             app:layout_constraintEnd_toStartOf="@+id/bird_search_progress"
@@ -65,10 +65,11 @@
                 android:id="@+id/auto_complete_bird_name"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:minHeight="56dp"
                 android:inputType="textCapWords"
                 android:completionThreshold="2"
                 android:dropDownHeight="200dp"
-                android:maxLines="1" />
+                android:maxLines="3" />
 
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -86,26 +87,7 @@
             app:layout_constraintTop_toTopOf="@+id/text_input_bird_name" />
 
         <!-- Scientific Name (Auto-filled) -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/text_input_scientific_name"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:hint="🧬 Scientific Name"
-            app:helperText="Auto-filled from iNaturalist"
-            app:helperTextEnabled="true"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/text_input_bird_name">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/edit_text_scientific_name"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="text"
-                android:textStyle="italic" />
-
-        </com.google.android.material.textfield.TextInputLayout>
 
         <!-- Description -->
         <com.google.android.material.textfield.TextInputLayout
@@ -113,12 +95,12 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:hint="📝 Description"
+            android:hint="Description"
             app:helperText="Describe your sighting details"
             app:helperTextEnabled="true"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/text_input_scientific_name">
+            app:layout_constraintTop_toBottomOf="@+id/text_input_bird_name">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/edit_text_description"
@@ -131,39 +113,6 @@
 
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Location with GPS -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/text_input_location"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:hint="📍 Location"
-            app:helperText="Manual entry or use GPS"
-            app:helperTextEnabled="true"
-            app:layout_constraintEnd_toStartOf="@+id/button_get_location"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/text_input_description">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/edit_text_location"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="textCapWords" />
-
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <Button
-            android:id="@+id/button_get_location"
-            style="@style/Widget.Material3.Button.IconButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:text="📍 GPS"
-            android:textSize="12sp"
-            app:layout_constraintBottom_toBottomOf="@+id/text_input_location"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/text_input_location"
-            app:layout_constraintTop_toTopOf="@+id/text_input_location" />
 
         <!-- iNaturalist Attribution -->
         <TextView
@@ -177,7 +126,7 @@
             android:textSize="12sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/text_input_location" />
+            app:layout_constraintTop_toBottomOf="@+id/text_input_description" />
 
         <!-- Share Button -->
         <Button
@@ -186,7 +135,7 @@
             android:layout_height="56dp"
             android:layout_marginTop="24dp"
             android:layout_marginBottom="16dp"
-            android:text="🦅 Share Sighting"
+            android:text="Share Sighting"
             android:textSize="16sp"
             android:textStyle="bold"
             app:layout_constraintBottom_toBottomOf="parent"

@@ -10,15 +10,15 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
+import com.bumptech.glide.Glide
 import com.example.look_a_bird.R
 import com.example.look_a_bird.model.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
-import com.squareup.picasso.Picasso
 import java.text.SimpleDateFormat
 import java.util.*
-import androidx.navigation.fragment.findNavController
 
 class ProfileFragment : Fragment() {
 
@@ -26,7 +26,6 @@ class ProfileFragment : Fragment() {
     private lateinit var textUserName: TextView
     private lateinit var textUserEmail: TextView
     private lateinit var textMemberSince: TextView
-    // REMOVED: Stats TextViews (postsCount, speciesCount, locationsCount)
     private lateinit var buttonEditProfile: Button
     private lateinit var buttonMyPosts: Button
     private lateinit var buttonLogout: Button
@@ -36,7 +35,6 @@ class ProfileFragment : Fragment() {
     private val auth = FirebaseAuth.getInstance()
     private val db = FirebaseFirestore.getInstance()
 
-    // ADDED: Real-time updates
     private var profileListener: ListenerRegistration? = null
 
     override fun onCreateView(
@@ -55,7 +53,6 @@ class ProfileFragment : Fragment() {
         loadUserProfile()
     }
 
-    // ADDED: Lifecycle methods for real-time updates
     override fun onStart() {
         super.onStart()
         startRealtimeUpdates()
@@ -71,7 +68,6 @@ class ProfileFragment : Fragment() {
         textUserName = view.findViewById(R.id.text_user_name)
         textUserEmail = view.findViewById(R.id.text_user_email)
         textMemberSince = view.findViewById(R.id.text_member_since)
-        // REMOVED: Stats TextViews setup
         buttonEditProfile = view.findViewById(R.id.button_edit_profile)
         buttonMyPosts = view.findViewById(R.id.button_my_posts)
         buttonLogout = view.findViewById(R.id.button_logout)
@@ -102,11 +98,9 @@ class ProfileFragment : Fragment() {
             return
         }
 
-        // UPDATED: Load from Firestore with fallback to Firebase Auth
         loadUserFromFirestore(firebaseUser.uid)
     }
 
-    // ADDED: Load user from Firestore
     private fun loadUserFromFirestore(userId: String) {
         db.collection("users").document(userId)
             .get()
@@ -133,7 +127,6 @@ class ProfileFragment : Fragment() {
             }
     }
 
-    // ADDED: Create user from Firebase Auth
     private fun createUserFromFirebaseAuth() {
         val firebaseUser = auth.currentUser
         if (firebaseUser != null) {
@@ -143,14 +136,10 @@ class ProfileFragment : Fragment() {
                 email = firebaseUser.email ?: "No email",
                 profileImageUrl = firebaseUser.photoUrl?.toString() ?: "",
                 memberSince = firebaseUser.metadata?.creationTimestamp ?: System.currentTimeMillis(),
-                postsCount = 0,
-                speciesCount = 0,
-                locationsCount = 0
             )
         }
     }
 
-    // ADDED: Real-time updates listener
     private fun startRealtimeUpdates() {
         val firebaseUser = auth.currentUser
         if (firebaseUser == null) return
@@ -175,7 +164,6 @@ class ProfileFragment : Fragment() {
             }
     }
 
-    // ADDED: Stop real-time updates
     private fun stopRealtimeUpdates() {
         profileListener?.remove()
         profileListener = null
@@ -186,21 +174,18 @@ class ProfileFragment : Fragment() {
             textUserName.text = user.name
             textUserEmail.text = user.email
             textMemberSince.text = "Member since ${formatMemberSince(user.memberSince)}"
-            // REMOVED: Stats population
-
-            // UPDATED: Load profile image with Picasso (real-time updates)
             loadProfileImage(user.profileImageUrl)
         }
     }
 
-    // ADDED: Profile image loading with Picasso
     private fun loadProfileImage(imageUrl: String) {
         if (imageUrl.isNotEmpty() && imageUrl != "null") {
             try {
-                Picasso.get()
+                Glide.with(this)
                     .load(imageUrl)
                     .placeholder(android.R.drawable.ic_menu_gallery)
                     .error(android.R.drawable.ic_menu_gallery)
+                    .circleCrop()
                     .into(imageProfilePicture)
             } catch (e: Exception) {
                 imageProfilePicture.setImageResource(android.R.drawable.ic_menu_gallery)
@@ -225,7 +210,6 @@ class ProfileFragment : Fragment() {
     }
 
     private fun navigateToMyPosts() {
-        // UPDATED: Navigate to User Posts (only user's posts)
         try {
             val action = ProfileFragmentDirections.actionProfileToUserPosts()
             findNavController().navigate(action)
@@ -235,7 +219,6 @@ class ProfileFragment : Fragment() {
     }
 
     private fun performLogout() {
-        // Show confirmation dialog
         android.app.AlertDialog.Builder(context)
             .setTitle("Logout")
             .setMessage("Are you sure you want to logout?")
@@ -248,8 +231,6 @@ class ProfileFragment : Fragment() {
 
     private fun confirmLogout() {
         showLoading(true)
-
-        // ADDED: Stop real-time updates before logout
         stopRealtimeUpdates()
 
         FirebaseAuth.getInstance().signOut()
@@ -257,7 +238,6 @@ class ProfileFragment : Fragment() {
         showLoading(false)
         Toast.makeText(context, "Logged out successfully!", Toast.LENGTH_SHORT).show()
 
-        // Navigate to login screen
         val action = ProfileFragmentDirections.actionGlobalLogout()
         findNavController().navigate(action)
     }

@@ -1,43 +1,37 @@
 package com.example.look_a_bird.ui.addpost
 
+import Post
+import android.Manifest
+import android.app.Activity
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
-import android.widget.ProgressBar
-import android.widget.Toast
-import androidx.fragment.app.Fragment
-import com.example.look_a_bird.R
-import com.example.look_a_bird.model.Post
-import android.widget.Button
+import android.widget.*
 import androidx.core.content.ContextCompat
-import com.google.android.material.textfield.TextInputEditText
-import androidx.navigation.fragment.navArgs
-import com.google.android.gms.location.LocationServices
-import android.Manifest
-import android.content.pm.PackageManager
-import android.widget.AutoCompleteTextView
-import android.widget.ArrayAdapter
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import android.text.TextWatcher
-import android.text.Editable
+import androidx.navigation.fragment.navArgs
+import com.example.look_a_bird.R
 import com.example.look_a_bird.api.ApiRepository
 import com.example.look_a_bird.api.ApiResult
 import com.example.look_a_bird.api.BirdSpecies
+import com.google.android.gms.location.LocationServices
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class AddPostFragment : Fragment() {
 
     private lateinit var imagePostPreview: ImageView
     private lateinit var buttonSelectImage: Button
     private lateinit var autoCompleteBirdName: AutoCompleteTextView
-    private lateinit var editTextScientificName: TextInputEditText
-    private lateinit var editTextDescription: TextInputEditText
-    private lateinit var editTextLocation: TextInputEditText
-    private lateinit var buttonGetLocation: Button
+    private lateinit var editTextDescription: EditText
     private lateinit var buttonSavePost: Button
     private lateinit var progressBar: ProgressBar
     private lateinit var birdSearchProgress: ProgressBar
@@ -49,10 +43,15 @@ class AddPostFragment : Fragment() {
     private var selectedBird: BirdSpecies? = null
     private var searchJob: Job? = null
 
-    // New: Map of names to BirdSpecies
     private val birdSuggestionsMap = linkedMapOf<String, BirdSpecies>()
-
     private lateinit var birdAdapter: ArrayAdapter<String>
+
+    private var currentLatitude: Double = 0.0
+    private var currentLongitude: Double = 0.0
+
+    companion object {
+        private const val REQUEST_IMAGE_PICK = 1001
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -68,17 +67,25 @@ class AddPostFragment : Fragment() {
         setupViews(view)
         setupBirdSearch()
         setupClickListeners()
-        loadInitialBirdSuggestions()
+        getCurrentLocation()
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_IMAGE_PICK && resultCode == Activity.RESULT_OK) {
+            val uri = data?.data
+            if (uri != null) {
+                selectedImageUri = uri.toString()
+                imagePostPreview.setImageURI(uri)
+            }
+        }
     }
 
     private fun setupViews(view: View) {
         imagePostPreview = view.findViewById(R.id.image_post_preview)
         buttonSelectImage = view.findViewById(R.id.button_select_image)
         autoCompleteBirdName = view.findViewById(R.id.auto_complete_bird_name)
-        editTextScientificName = view.findViewById(R.id.edit_text_scientific_name)
         editTextDescription = view.findViewById(R.id.edit_text_description)
-        editTextLocation = view.findViewById(R.id.edit_text_location)
-        buttonGetLocation = view.findViewById(R.id.button_get_location)
         buttonSavePost = view.findViewById(R.id.button_save_post)
         progressBar = view.findViewById(R.id.progress_bar)
         birdSearchProgress = view.findViewById(R.id.bird_search_progress)
@@ -93,17 +100,15 @@ class AddPostFragment : Fragment() {
         autoCompleteBirdName.setAdapter(birdAdapter)
         autoCompleteBirdName.threshold = 2
 
-        autoCompleteBirdName.addTextChangedListener(object : TextWatcher {
+        autoCompleteBirdName.addTextChangedListener(object : android.text.TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-
-            override fun afterTextChanged(s: Editable?) {
+            override fun afterTextChanged(s: android.text.Editable?) {
                 val query = s.toString().trim()
                 if (query.length >= 2) {
                     searchBirds(query)
                 } else if (query.isEmpty()) {
                     selectedBird = null
-                    editTextScientificName.setText("")
                 }
             }
         })
@@ -114,8 +119,6 @@ class AddPostFragment : Fragment() {
             if (selected != null) {
                 selectedBird = selected
                 autoCompleteBirdName.setText(selected.commonName, false)
-                editTextScientificName.setText(selected.scientificName)
-
                 autoCompleteBirdName.clearFocus()
                 autoCompleteBirdName.dismissDropDown()
                 Toast.makeText(context, "Selected: ${selected.commonName}", Toast.LENGTH_SHORT).show()
@@ -128,44 +131,11 @@ class AddPostFragment : Fragment() {
         for (bird in birds) {
             birdSuggestionsMap[bird.commonName] = bird
         }
-
         birdAdapter.clear()
         birdAdapter.addAll(birdSuggestionsMap.keys)
         birdAdapter.notifyDataSetChanged()
-
         if (autoCompleteBirdName.hasFocus()) {
             autoCompleteBirdName.showDropDown()
-        }
-    }
-
-    private fun loadInitialBirdSuggestions() {
-        birdSearchProgress.visibility = View.VISIBLE
-
-        lifecycleScope.launch {
-            try {
-                val result = if (args.latitude != 0.0f && args.longitude != 0.0f) {
-                    apiRepository.searchBirdsByLocation(args.latitude, args.longitude)
-                } else {
-                    apiRepository.getPopularBirds()
-                }
-
-                when (result) {
-                    is ApiResult.Success -> {
-                        updateBirdSuggestions(result.data)
-                        if (args.latitude != 0.0f && args.longitude != 0.0f) {
-                            Toast.makeText(context, "Showing birds common in your area!", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                    is ApiResult.Error -> {
-                        Toast.makeText(context, "Error loading bird suggestions", Toast.LENGTH_SHORT).show()
-                    }
-                    else -> {}
-                }
-            } catch (e: Exception) {
-                Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
-
-            birdSearchProgress.visibility = View.GONE
         }
     }
 
@@ -173,156 +143,173 @@ class AddPostFragment : Fragment() {
         searchJob?.cancel()
         searchJob = lifecycleScope.launch {
             delay(300)
-
             birdSearchProgress.visibility = View.VISIBLE
-
             try {
                 when (val result = apiRepository.searchBirds(query)) {
-                    is ApiResult.Success -> {
-                        updateBirdSuggestions(result.data)
-                    }
-                    is ApiResult.Error -> {
-                        Toast.makeText(context, "Search error: ${result.message}", Toast.LENGTH_SHORT).show()
-                    }
+                    is ApiResult.Success -> updateBirdSuggestions(result.data)
+                    is ApiResult.Error -> Toast.makeText(context, "Search error: ${result.message}", Toast.LENGTH_SHORT).show()
                     else -> {}
                 }
             } catch (e: Exception) {
                 Toast.makeText(context, "Network error: ${e.message}", Toast.LENGTH_SHORT).show()
             }
-
             birdSearchProgress.visibility = View.GONE
         }
-    }
-
-    private fun setupClickListeners() {
-        buttonSelectImage.setOnClickListener {
-            selectImage()
-        }
-
-        buttonGetLocation.setOnClickListener {
-            getCurrentLocation()
-        }
-
-        buttonSavePost.setOnClickListener {
-            savePost()
-        }
-    }
-
-    private fun selectImage() {
-        Toast.makeText(context, "Image selection - will implement later", Toast.LENGTH_SHORT).show()
     }
 
     private fun getCurrentLocation() {
         val fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
-
-        if (ContextCompat.checkSelfPermission(
-                requireContext(),
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-        ) {
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             fusedLocationClient.lastLocation.addOnSuccessListener { location ->
                 if (location != null) {
-                    val lat = location.latitude.toFloat()
-                    val lon = location.longitude.toFloat()
-                    editTextLocation.setText("Lat: %.5f, Lon: %.5f".format(lat, lon))
-                    loadLocationBasedSuggestions(lat, lon)
-                } else {
-                    Toast.makeText(context, "Unable to get location", Toast.LENGTH_SHORT).show()
+                    currentLatitude = location.latitude
+                    currentLongitude = location.longitude
                 }
             }
-        } else {
-            Toast.makeText(context, "Location permission not granted", Toast.LENGTH_SHORT).show()
         }
     }
 
-    private fun loadLocationBasedSuggestions(lat: Float, lon: Float) {
-        lifecycleScope.launch {
-            birdSearchProgress.visibility = View.VISIBLE
+    private fun setupClickListeners() {
+        buttonSelectImage.setOnClickListener { selectImage() }
+        buttonSavePost.setOnClickListener { savePost() }
+    }
 
-            try {
-                when (val result = apiRepository.searchBirdsByLocation(lat, lon)) {
-                    is ApiResult.Success -> {
-                        updateBirdSuggestions(result.data)
-                        Toast.makeText(context, "Updated suggestions for your location!", Toast.LENGTH_SHORT).show()
-                    }
-                    is ApiResult.Error -> {
-                        Toast.makeText(context, "Error loading location suggestions", Toast.LENGTH_SHORT).show()
-                    }
-                    else -> {}
-                }
-            } catch (e: Exception) {
-                Toast.makeText(context, "Location search error: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
-
-            birdSearchProgress.visibility = View.GONE
-        }
+    private fun selectImage() {
+        val intent = Intent(Intent.ACTION_GET_CONTENT)
+        intent.type = "image/*"
+        startActivityForResult(intent, REQUEST_IMAGE_PICK)
     }
 
     private fun savePost() {
         val birdName = autoCompleteBirdName.text.toString().trim()
-        val scientificName = editTextScientificName.text.toString().trim()
         val description = editTextDescription.text.toString().trim()
-        val location = editTextLocation.text.toString().trim()
 
-        if (!validateInput(birdName, description, location)) return
+        if (!validateInput(birdName, description)) return
 
         showLoading(true)
 
-        val newPost = Post(
-            id = "",
-            userId = "current_user_id",
-            userName = "Current User",
-            userProfileImage = "",
-            birdSpecies = birdName,
-            scientificName = scientificName,
-            description = description,
-            imageUrl = selectedImageUri,
-            latitude = args.latitude,
-            longitude = args.longitude,
-            location = location,
-            timestamp = System.currentTimeMillis()
-        )
-
-        simulateSavePost(newPost)
+        // Re-fetch location immediately before saving
+        val fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION)
+            == PackageManager.PERMISSION_GRANTED) {
+            fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                if (location != null) {
+                    currentLatitude = location.latitude
+                    currentLongitude = location.longitude
+                }
+                savePostInternal(birdName, description)
+            }
+        } else {
+            savePostInternal(birdName, description)
+        }
     }
 
-    private fun validateInput(birdName: String, description: String, location: String): Boolean {
+    private fun savePostInternal(birdName: String, description: String) {
+        val currentUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+        val userId = currentUser?.uid ?: ""
+
+        FirebaseFirestore.getInstance()
+            .collection("users")
+            .document(userId)
+            .get()
+            .addOnSuccessListener { doc ->
+                val userName = doc.getString("name") ?: "Anonymous"
+                val userProfileImage = doc.getString("profileImageUrl") ?: ""
+
+                if (selectedImageUri.isNotEmpty()) {
+                    uploadImageAndSavePost(
+                        birdName, description, userId, userName, userProfileImage
+                    )
+                } else {
+                    savePostToFirestore(
+                        birdName, description, userId, userName, userProfileImage, ""
+                    )
+                }
+            }
+            .addOnFailureListener { e ->
+                showLoading(false)
+                Toast.makeText(context, "Error fetching user profile: ${e.message}", Toast.LENGTH_LONG).show()
+            }
+    }
+
+    private fun uploadImageAndSavePost(
+        birdName: String,
+        description: String,
+        userId: String,
+        userName: String,
+        userProfileImage: String
+    ) {
+        val storageRef = FirebaseStorage.getInstance()
+            .reference.child("post_images/${System.currentTimeMillis()}.jpg")
+
+        storageRef.putFile(Uri.parse(selectedImageUri))
+            .continueWithTask { task ->
+                if (!task.isSuccessful) {
+                    throw task.exception ?: Exception("Upload failed")
+                }
+                storageRef.downloadUrl
+            }
+            .addOnSuccessListener { downloadUri ->
+                savePostToFirestore(
+                    birdName, description, userId, userName, userProfileImage, downloadUri.toString()
+                )
+            }
+            .addOnFailureListener { e ->
+                showLoading(false)
+                Toast.makeText(context, "Image upload failed: ${e.message}", Toast.LENGTH_LONG).show()
+            }
+    }
+
+    private fun savePostToFirestore(
+        birdName: String,
+        description: String,
+        userId: String,
+        userName: String,
+        userProfileImage: String,
+        imageUrl: String
+    ) {
+        val newPost = Post(
+            userId = userId,
+            userName = userName,
+            userProfileImage = userProfileImage,
+            birdSpecies = birdName,
+            scientificName = selectedBird?.scientificName ?: "",
+            description = description,
+            imageUrl = imageUrl,
+            latitude = currentLatitude,
+            longitude = currentLongitude,
+            timestamp = com.google.firebase.Timestamp.now()
+        )
+
+        FirebaseFirestore.getInstance()
+            .collection("posts")
+            .add(newPost)
+            .addOnSuccessListener {
+                showLoading(false)
+                Toast.makeText(context, "Post saved successfully!", Toast.LENGTH_SHORT).show()
+                clearForm()
+            }
+            .addOnFailureListener { e ->
+                showLoading(false)
+                Toast.makeText(context, "Error saving post: ${e.message}", Toast.LENGTH_LONG).show()
+            }
+    }
+
+    private fun validateInput(birdName: String, description: String): Boolean {
         if (birdName.isEmpty()) {
             autoCompleteBirdName.error = "Bird name is required"
             return false
         }
-
-        if (!birdName.matches(Regex("^[a-zA-Z\\s]+$"))) {
-            autoCompleteBirdName.error = "Bird name can only contain letters and spaces"
-            return false
-        }
-
         if (description.isEmpty()) {
             editTextDescription.error = "Description is required"
             return false
         }
-
-        if (location.isEmpty()) {
-            editTextLocation.error = "Location is required"
-            return false
-        }
-
         return true
-    }
-
-    private fun simulateSavePost(post: Post) {
-        view?.postDelayed({
-            showLoading(false)
-            Toast.makeText(context, "Post saved successfully!", Toast.LENGTH_SHORT).show()
-            clearForm()
-        }, 2000)
     }
 
     private fun clearForm() {
         autoCompleteBirdName.text?.clear()
-        editTextScientificName.text?.clear()
         editTextDescription.text?.clear()
-        editTextLocation.text?.clear()
         selectedImageUri = ""
         selectedBird = null
         imagePostPreview.setImageResource(android.R.drawable.ic_menu_camera)
@@ -332,7 +319,6 @@ class AddPostFragment : Fragment() {
         progressBar.visibility = if (show) View.VISIBLE else View.GONE
         buttonSavePost.isEnabled = !show
         buttonSelectImage.isEnabled = !show
-        buttonGetLocation.isEnabled = !show
         autoCompleteBirdName.isEnabled = !show
     }
 }
