@@ -13,6 +13,9 @@ import androidx.fragment.app.Fragment
 import com.example.look_a_bird.R
 import com.example.look_a_bird.model.User
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
+import com.squareup.picasso.Picasso
 import java.text.SimpleDateFormat
 import java.util.*
 import androidx.navigation.fragment.findNavController
@@ -23,15 +26,18 @@ class ProfileFragment : Fragment() {
     private lateinit var textUserName: TextView
     private lateinit var textUserEmail: TextView
     private lateinit var textMemberSince: TextView
-    private lateinit var textPostsCount: TextView
-    private lateinit var textSpeciesCount: TextView
-    private lateinit var textLocationsCount: TextView
+    // REMOVED: Stats TextViews (postsCount, speciesCount, locationsCount)
     private lateinit var buttonEditProfile: Button
     private lateinit var buttonMyPosts: Button
     private lateinit var buttonLogout: Button
     private lateinit var progressBar: ProgressBar
 
     private var currentUser: User? = null
+    private val auth = FirebaseAuth.getInstance()
+    private val db = FirebaseFirestore.getInstance()
+
+    // ADDED: Real-time updates
+    private var profileListener: ListenerRegistration? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -49,14 +55,23 @@ class ProfileFragment : Fragment() {
         loadUserProfile()
     }
 
+    // ADDED: Lifecycle methods for real-time updates
+    override fun onStart() {
+        super.onStart()
+        startRealtimeUpdates()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        stopRealtimeUpdates()
+    }
+
     private fun setupViews(view: View) {
         imageProfilePicture = view.findViewById(R.id.image_profile_picture)
         textUserName = view.findViewById(R.id.text_user_name)
         textUserEmail = view.findViewById(R.id.text_user_email)
         textMemberSince = view.findViewById(R.id.text_member_since)
-        textPostsCount = view.findViewById(R.id.text_posts_count)
-        textSpeciesCount = view.findViewById(R.id.text_species_count)
-        textLocationsCount = view.findViewById(R.id.text_locations_count)
+        // REMOVED: Stats TextViews setup
         buttonEditProfile = view.findViewById(R.id.button_edit_profile)
         buttonMyPosts = view.findViewById(R.id.button_my_posts)
         buttonLogout = view.findViewById(R.id.button_logout)
@@ -80,27 +95,90 @@ class ProfileFragment : Fragment() {
     private fun loadUserProfile() {
         showLoading(true)
 
-        val firebaseUser = FirebaseAuth.getInstance().currentUser
+        val firebaseUser = auth.currentUser
         if (firebaseUser == null) {
             showLoading(false)
             Toast.makeText(context, "No user logged in", Toast.LENGTH_SHORT).show()
             return
         }
 
-        // For now, we'll just display what Firebase provides
-        currentUser = User(
-            id = firebaseUser.uid,
-            name = firebaseUser.displayName ?: "Anonymous",
-            email = firebaseUser.email ?: "No email",
-            profileImageUrl = firebaseUser.photoUrl?.toString() ?: "",
-            memberSince = firebaseUser.metadata?.creationTimestamp ?: System.currentTimeMillis(),
-            postsCount = 0,
-            speciesCount = 0,
-            locationsCount = 0
-        )
+        // UPDATED: Load from Firestore with fallback to Firebase Auth
+        loadUserFromFirestore(firebaseUser.uid)
+    }
 
-        showLoading(false)
-        populateUserData()
+    // ADDED: Load user from Firestore
+    private fun loadUserFromFirestore(userId: String) {
+        db.collection("users").document(userId)
+            .get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    try {
+                        currentUser = document.toObject(User::class.java)
+                        currentUser?.id = document.id
+                    } catch (e: Exception) {
+                        createUserFromFirebaseAuth()
+                    }
+                } else {
+                    createUserFromFirebaseAuth()
+                }
+
+                showLoading(false)
+                populateUserData()
+            }
+            .addOnFailureListener { exception ->
+                Toast.makeText(context, "Error loading profile: ${exception.message}", Toast.LENGTH_SHORT).show()
+                createUserFromFirebaseAuth()
+                showLoading(false)
+                populateUserData()
+            }
+    }
+
+    // ADDED: Create user from Firebase Auth
+    private fun createUserFromFirebaseAuth() {
+        val firebaseUser = auth.currentUser
+        if (firebaseUser != null) {
+            currentUser = User(
+                id = firebaseUser.uid,
+                name = firebaseUser.displayName ?: "Anonymous",
+                email = firebaseUser.email ?: "No email",
+                profileImageUrl = firebaseUser.photoUrl?.toString() ?: "",
+                memberSince = firebaseUser.metadata?.creationTimestamp ?: System.currentTimeMillis(),
+                postsCount = 0,
+                speciesCount = 0,
+                locationsCount = 0
+            )
+        }
+    }
+
+    // ADDED: Real-time updates listener
+    private fun startRealtimeUpdates() {
+        val firebaseUser = auth.currentUser
+        if (firebaseUser == null) return
+
+        profileListener = db.collection("users").document(firebaseUser.uid)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) return@addSnapshotListener
+
+                if (snapshot != null && snapshot.exists()) {
+                    try {
+                        val updatedUser = snapshot.toObject(User::class.java)
+                        updatedUser?.id = snapshot.id
+
+                        if (updatedUser != null && updatedUser != currentUser) {
+                            currentUser = updatedUser
+                            populateUserData()
+                        }
+                    } catch (e: Exception) {
+                        // Ignore parsing errors
+                    }
+                }
+            }
+    }
+
+    // ADDED: Stop real-time updates
+    private fun stopRealtimeUpdates() {
+        profileListener?.remove()
+        profileListener = null
     }
 
     private fun populateUserData() {
@@ -108,15 +186,27 @@ class ProfileFragment : Fragment() {
             textUserName.text = user.name
             textUserEmail.text = user.email
             textMemberSince.text = "Member since ${formatMemberSince(user.memberSince)}"
-            textPostsCount.text = user.postsCount.toString()
-            textSpeciesCount.text = user.speciesCount.toString()
-            textLocationsCount.text = user.locationsCount.toString()
+            // REMOVED: Stats population
 
-            // Load profile image if available
-            if (user.profileImageUrl.isNotEmpty()) {
-                // Here we will load image with Picasso
-                // For now, keep placeholder
+            // UPDATED: Load profile image with Picasso (real-time updates)
+            loadProfileImage(user.profileImageUrl)
+        }
+    }
+
+    // ADDED: Profile image loading with Picasso
+    private fun loadProfileImage(imageUrl: String) {
+        if (imageUrl.isNotEmpty() && imageUrl != "null") {
+            try {
+                Picasso.get()
+                    .load(imageUrl)
+                    .placeholder(android.R.drawable.ic_menu_gallery)
+                    .error(android.R.drawable.ic_menu_gallery)
+                    .into(imageProfilePicture)
+            } catch (e: Exception) {
+                imageProfilePicture.setImageResource(android.R.drawable.ic_menu_gallery)
             }
+        } else {
+            imageProfilePicture.setImageResource(android.R.drawable.ic_menu_gallery)
         }
     }
 
@@ -158,6 +248,9 @@ class ProfileFragment : Fragment() {
 
     private fun confirmLogout() {
         showLoading(true)
+
+        // ADDED: Stop real-time updates before logout
+        stopRealtimeUpdates()
 
         FirebaseAuth.getInstance().signOut()
 
