@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -38,27 +39,57 @@
             android:layout_marginBottom="16dp"
             android:text="Change Photo" />
 
+        <!-- UPDATED: Bird Name with iNaturalist API Search -->
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/text_input_bird_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:hint="Bird Name (Common)">
+            android:layout_marginBottom="8dp"
+            android:hint="Search Bird Name"
+            app:startIconDrawable="@android:drawable/ic_search_category_default">
 
             <AutoCompleteTextView
-                android:id="@+id/edit_text_bird_name"
+                android:id="@+id/auto_complete_bird_name"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="48dp"
                 android:inputType="textCapWords"
-                android:completionThreshold="1"/>
+                android:completionThreshold="2"
+                android:contentDescription="Search for bird species from iNaturalist database"
+                android:importantForAccessibility="yes"/>
+
         </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- ADDED: Bird Search Progress Indicator -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ProgressBar
+                android:id="@+id/bird_search_progress"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:layout_marginEnd="8dp"
+                android:visibility="gone" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Type 2+ letters to search birds from iNaturalist database"
+                android:textSize="12sp"
+                android:textColor="@android:color/darker_gray" />
+
+        </LinearLayout>
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/text_input_description"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:hint="Description">
+            android:layout_marginBottom="24dp"
+            android:hint="Description"
+            app:startIconDrawable="@android:drawable/ic_menu_edit">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/edit_text_description"
@@ -67,8 +98,10 @@
                 android:gravity="top"
                 android:inputType="textMultiLine|textCapSentences"
                 android:lines="4" />
+
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- Action Buttons -->
         <Button
             android:id="@+id/button_save_changes"
             android:layout_width="match_parent"
@@ -83,6 +116,8 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
             android:text="Cancel"
+            android:backgroundTint="@android:color/darker_gray"
+            android:textColor="@android:color/white"
             android:textSize="16sp" />
 
         <Button
@@ -95,6 +130,7 @@
             android:textColor="@android:color/white"
             android:textSize="16sp" />
 
+        <!-- Main Progress Bar -->
         <ProgressBar
             android:id="@+id/progress_bar"
             android:layout_width="wrap_content"

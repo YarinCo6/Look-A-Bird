@@ -1,38 +1,54 @@
 package com.example.look_a_bird.ui.editpost
 
 import Post
+import android.app.Activity
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.ImageView
-import android.widget.ProgressBar
-import android.widget.Toast
+import android.widget.*
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
 import com.example.look_a_bird.R
+import com.example.look_a_bird.api.ApiRepository
+import com.example.look_a_bird.api.ApiResult
+import com.example.look_a_bird.api.BirdSpecies
 import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class EditPostFragment : Fragment() {
 
     private lateinit var imagePostPreview: ImageView
     private lateinit var buttonChangeImage: Button
-    private lateinit var editTextBirdName: TextInputEditText
+    private lateinit var autoCompleteBirdName: AutoCompleteTextView
     private lateinit var editTextDescription: TextInputEditText
     private lateinit var buttonSaveChanges: Button
     private lateinit var buttonCancel: Button
     private lateinit var buttonDeletePost: Button
     private lateinit var progressBar: ProgressBar
+    private lateinit var birdSearchProgress: ProgressBar
 
     private var currentPost: Post? = null
     private var postId: String = ""
     private var selectedImageUri: Uri? = null
     private var isImageChanged = false
+
+    // iNaturalist API integration
+    private val apiRepository = ApiRepository.getInstance()
+    private var selectedBird: BirdSpecies? = null
+    private var searchJob: Job? = null
+    private var isSelecting = false
+
+    private val birdSuggestionsMap = linkedMapOf<String, BirdSpecies>()
+    private lateinit var birdAdapter: ArrayAdapter<String>
 
     private val db = FirebaseFirestore.getInstance()
     private val storage = FirebaseStorage.getInstance()
@@ -42,8 +58,6 @@ class EditPostFragment : Fragment() {
         arguments?.let {
             postId = it.getString("postId", "")
         }
-
-
     }
 
     override fun onCreateView(
@@ -57,6 +71,7 @@ class EditPostFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setupViews(view)
+        setupBirdSearch()
         setupClickListeners()
         loadPostData()
     }
@@ -64,12 +79,90 @@ class EditPostFragment : Fragment() {
     private fun setupViews(view: View) {
         imagePostPreview = view.findViewById(R.id.image_post_preview)
         buttonChangeImage = view.findViewById(R.id.button_change_image)
-        editTextBirdName = view.findViewById(R.id.edit_text_bird_name)
+        autoCompleteBirdName = view.findViewById(R.id.auto_complete_bird_name)
         editTextDescription = view.findViewById(R.id.edit_text_description)
         buttonSaveChanges = view.findViewById(R.id.button_save_changes)
         buttonCancel = view.findViewById(R.id.button_cancel)
         buttonDeletePost = view.findViewById(R.id.button_delete_post)
         progressBar = view.findViewById(R.id.progress_bar)
+        birdSearchProgress = view.findViewById(R.id.bird_search_progress)
+    }
+
+    private fun setupBirdSearch() {
+        birdAdapter = ArrayAdapter(
+            requireContext(),
+            android.R.layout.simple_dropdown_item_1line,
+            mutableListOf()
+        )
+        autoCompleteBirdName.setAdapter(birdAdapter)
+        autoCompleteBirdName.threshold = 2
+
+        autoCompleteBirdName.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: android.text.Editable?) {
+                // Don't search while selecting
+                if (isSelecting) return
+
+                val query = s.toString().trim()
+                if (query.length >= 2) {
+                    searchBirds(query)
+                } else if (query.isEmpty()) {
+                    selectedBird = null
+                }
+            }
+        })
+
+        autoCompleteBirdName.setOnItemClickListener { _, _, position, _ ->
+            // Prevent TextWatcher from interfering
+            isSelecting = true
+
+            val selectedName = birdAdapter.getItem(position)
+            val selected = birdSuggestionsMap[selectedName]
+            if (selected != null) {
+                selectedBird = selected
+                autoCompleteBirdName.setText(selected.commonName, false)
+                autoCompleteBirdName.clearFocus()
+                autoCompleteBirdName.dismissDropDown()
+                Toast.makeText(context, "Selected: ${selected.commonName}", Toast.LENGTH_SHORT).show()
+            }
+
+            // Reset flag after a short delay
+            view?.postDelayed({
+                isSelecting = false
+            }, 100)
+        }
+    }
+
+    private fun updateBirdSuggestions(birds: List<BirdSpecies>) {
+        birdSuggestionsMap.clear()
+        for (bird in birds) {
+            birdSuggestionsMap[bird.commonName] = bird
+        }
+        birdAdapter.clear()
+        birdAdapter.addAll(birdSuggestionsMap.keys)
+        birdAdapter.notifyDataSetChanged()
+        if (autoCompleteBirdName.hasFocus()) {
+            autoCompleteBirdName.showDropDown()
+        }
+    }
+
+    private fun searchBirds(query: String) {
+        searchJob?.cancel()
+        searchJob = lifecycleScope.launch {
+            delay(300)
+            birdSearchProgress.visibility = View.VISIBLE
+            try {
+                when (val result = apiRepository.searchBirds(query)) {
+                    is ApiResult.Success -> updateBirdSuggestions(result.data)
+                    is ApiResult.Error -> Toast.makeText(context, "Search error: ${result.message}", Toast.LENGTH_SHORT).show()
+                    else -> {}
+                }
+            } catch (e: Exception) {
+                Toast.makeText(context, "Network error: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+            birdSearchProgress.visibility = View.GONE
+        }
     }
 
     private fun setupClickListeners() {
@@ -115,8 +208,19 @@ class EditPostFragment : Fragment() {
 
     private fun populateFields() {
         currentPost?.let { post ->
-            editTextBirdName.setText(post.birdSpecies)
+            autoCompleteBirdName.setText(post.birdSpecies)
             editTextDescription.setText(post.description)
+
+            // Set selected bird from existing data
+            if (post.scientificName.isNotEmpty()) {
+                selectedBird = BirdSpecies(
+                    id = 0, // Unknown ID for existing posts
+                    commonName = post.birdSpecies,
+                    scientificName = post.scientificName,
+                    photoUrl = null,
+                    wikipediaUrl = null
+                )
+            }
 
             if (post.imageUrl.isNotEmpty()) {
                 Glide.with(this)
@@ -128,15 +232,15 @@ class EditPostFragment : Fragment() {
     }
 
     private fun pickImage() {
-        val intent = android.content.Intent(android.content.Intent.ACTION_GET_CONTENT).apply {
+        val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
             type = "image/*"
         }
         startActivityForResult(intent, 1001)
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: android.content.Intent?) {
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == 1001 && resultCode == android.app.Activity.RESULT_OK) {
+        if (requestCode == 1001 && resultCode == Activity.RESULT_OK) {
             data?.data?.let { uri ->
                 selectedImageUri = uri
                 isImageChanged = true
@@ -149,7 +253,7 @@ class EditPostFragment : Fragment() {
     }
 
     private fun saveChanges() {
-        val birdName = editTextBirdName.text.toString().trim()
+        val birdName = autoCompleteBirdName.text.toString().trim()
         val description = editTextDescription.text.toString().trim()
 
         if (birdName.isEmpty() || description.isEmpty()) {
@@ -159,12 +263,10 @@ class EditPostFragment : Fragment() {
 
         showLoading(true)
 
-        // For demo: auto-fill scientific name if desired
-        val resolvedScientificName = if (birdName.equals("Emu", true)) {
-            "Dromaius novaehollandiae"
-        } else {
-            ""
-        }
+        // Use scientific name from selected bird or keep existing
+        val scientificName = selectedBird?.scientificName
+            ?: currentPost?.scientificName
+            ?: ""
 
         if (isImageChanged && selectedImageUri != null) {
             val imageRef = storage.reference
@@ -173,7 +275,7 @@ class EditPostFragment : Fragment() {
             imageRef.putFile(selectedImageUri!!)
                 .addOnSuccessListener {
                     imageRef.downloadUrl.addOnSuccessListener { downloadUrl ->
-                        updateFirestore(birdName, description, resolvedScientificName, downloadUrl.toString())
+                        updateFirestore(birdName, description, scientificName, downloadUrl.toString())
                     }
                 }
                 .addOnFailureListener {
@@ -184,7 +286,7 @@ class EditPostFragment : Fragment() {
             updateFirestore(
                 birdName,
                 description,
-                resolvedScientificName,
+                scientificName,
                 currentPost?.imageUrl ?: ""
             )
         }
@@ -207,7 +309,7 @@ class EditPostFragment : Fragment() {
             .update(updates)
             .addOnSuccessListener {
                 showLoading(false)
-                Toast.makeText(context, "Post updated.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Post updated successfully!", Toast.LENGTH_SHORT).show()
                 findNavController().navigateUp()
             }
             .addOnFailureListener {
@@ -231,7 +333,7 @@ class EditPostFragment : Fragment() {
             .delete()
             .addOnSuccessListener {
                 showLoading(false)
-                Toast.makeText(context, "Post deleted.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Post deleted successfully!", Toast.LENGTH_SHORT).show()
                 findNavController().navigateUp()
             }
             .addOnFailureListener {
@@ -242,9 +344,11 @@ class EditPostFragment : Fragment() {
 
     private fun showLoading(show: Boolean) {
         progressBar.visibility = if (show) View.VISIBLE else View.GONE
+        birdSearchProgress.visibility = View.GONE
         buttonSaveChanges.isEnabled = !show
         buttonDeletePost.isEnabled = !show
         buttonChangeImage.isEnabled = !show
         buttonCancel.isEnabled = !show
+        autoCompleteBirdName.isEnabled = !show
     }
 }
