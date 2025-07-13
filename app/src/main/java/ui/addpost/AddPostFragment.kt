@@ -20,6 +20,7 @@ import com.example.look_a_bird.api.ApiRepository
 import com.example.look_a_bird.api.ApiResult
 import com.example.look_a_bird.api.BirdSpecies
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.Job
@@ -42,8 +43,6 @@ class AddPostFragment : Fragment() {
     private var selectedImageUri: String = ""
     private var selectedBird: BirdSpecies? = null
     private var searchJob: Job? = null
-
-    // ADDED: Fix for AutoComplete selection
     private var isSelecting = false
 
     private val birdSuggestionsMap = linkedMapOf<String, BirdSpecies>()
@@ -107,9 +106,7 @@ class AddPostFragment : Fragment() {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: android.text.Editable?) {
-                // FIXED: Don't search while selecting
                 if (isSelecting) return
-
                 val query = s.toString().trim()
                 if (query.length >= 2) {
                     searchBirds(query)
@@ -120,9 +117,7 @@ class AddPostFragment : Fragment() {
         })
 
         autoCompleteBirdName.setOnItemClickListener { _, _, position, _ ->
-            // ADDED: Prevent TextWatcher from interfering
             isSelecting = true
-
             val selectedName = birdAdapter.getItem(position)
             val selected = birdSuggestionsMap[selectedName]
             if (selected != null) {
@@ -132,11 +127,7 @@ class AddPostFragment : Fragment() {
                 autoCompleteBirdName.dismissDropDown()
                 Toast.makeText(context, "Selected: ${selected.commonName}", Toast.LENGTH_SHORT).show()
             }
-
-            // ADDED: Reset flag after a short delay
-            view?.postDelayed({
-                isSelecting = false
-            }, 100)
+            view?.postDelayed({ isSelecting = false }, 100)
         }
     }
 
@@ -173,13 +164,18 @@ class AddPostFragment : Fragment() {
 
     private fun getCurrentLocation() {
         val fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
-        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                if (location != null) {
-                    currentLatitude = location.latitude
-                    currentLongitude = location.longitude
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION)
+            == PackageManager.PERMISSION_GRANTED) {
+            fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
+                .addOnSuccessListener { location ->
+                    if (location != null) {
+                        currentLatitude = location.latitude
+                        currentLongitude = location.longitude
+                        Toast.makeText(context, "Location acquired: $currentLatitude, $currentLongitude", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(context, "Unable to get location", Toast.LENGTH_SHORT).show()
+                    }
                 }
-            }
         }
     }
 
@@ -202,20 +198,7 @@ class AddPostFragment : Fragment() {
 
         showLoading(true)
 
-        // Re-fetch location immediately before saving
-        val fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
-        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION)
-            == PackageManager.PERMISSION_GRANTED) {
-            fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                if (location != null) {
-                    currentLatitude = location.latitude
-                    currentLongitude = location.longitude
-                }
-                savePostInternal(birdName, description)
-            }
-        } else {
-            savePostInternal(birdName, description)
-        }
+        savePostInternal(birdName, description)
     }
 
     private fun savePostInternal(birdName: String, description: String) {

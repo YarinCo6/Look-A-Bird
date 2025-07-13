@@ -1,94 +1,125 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@android:color/white"
-    android:orientation="vertical"
-    android:padding="24dp"
-    android:gravity="center"
     tools:context=".ui.auth.LoginFragment">
 
+    <!-- Logo Image -->
     <ImageView
         android:id="@+id/image_logo"
         android:layout_width="120dp"
         android:layout_height="120dp"
-        android:layout_marginBottom="32dp"
         android:contentDescription="Look-A-Bird Logo"
-        android:src="@android:drawable/ic_menu_gallery" />
+        android:src="@drawable/ic_bird_logo"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginTop="48dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
+    <!-- App Title -->
     <TextView
         android:id="@+id/text_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
         android:text="Look-A-Bird"
         android:textColor="@android:color/black"
         android:textSize="28sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        app:layout_constraintTop_toBottomOf="@id/image_logo"
+        android:layout_marginTop="16dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
+    <!-- Subtitle -->
     <TextView
         android:id="@+id/text_subtitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="48dp"
         android:text="Discover the world of birds"
         android:textColor="@android:color/darker_gray"
-        android:textSize="16sp" />
+        android:textSize="16sp"
+        app:layout_constraintTop_toBottomOf="@id/text_title"
+        android:layout_marginTop="8dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
+    <!-- Email Input -->
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/text_input_email"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:hint="Email">
+        android:hint="Email"
+        app:layout_constraintTop_toBottomOf="@id/text_subtitle"
+        android:layout_marginTop="32dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginStart="32dp"
+        android:layout_marginEnd="32dp">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/edit_text_email"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="textEmailAddress" />
-
     </com.google.android.material.textfield.TextInputLayout>
 
+    <!-- Password Input -->
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/text_input_password"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="24dp"
         android:hint="Password"
-        app:passwordToggleEnabled="true">
+        app:passwordToggleEnabled="true"
+        app:layout_constraintTop_toBottomOf="@id/text_input_email"
+        android:layout_marginTop="16dp"
+        app:layout_constraintStart_toStartOf="@id/text_input_email"
+        app:layout_constraintEnd_toEndOf="@id/text_input_email">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/edit_text_password"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="textPassword" />
-
     </com.google.android.material.textfield.TextInputLayout>
 
+    <!-- Login Button -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/button_login"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="56dp"
-        android:layout_marginBottom="16dp"
         android:text="Login"
-        android:textSize="16sp" />
+        android:textSize="16sp"
+        app:layout_constraintTop_toBottomOf="@id/text_input_password"
+        android:layout_marginTop="24dp"
+        app:layout_constraintStart_toStartOf="@id/text_input_password"
+        app:layout_constraintEnd_toEndOf="@id/text_input_password" />
 
+    <!-- Register Link -->
     <TextView
         android:id="@+id/text_register_link"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Don't have an account? Sign up here"
         android:textColor="@android:color/holo_blue_dark"
-        android:textSize="14sp" />
+        android:textSize="14sp"
+        app:layout_constraintTop_toBottomOf="@id/button_login"
+        android:layout_marginTop="16dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
+    <!-- Progress Bar -->
     <ProgressBar
         android:id="@+id/progress_bar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
-        android:visibility="gone" />
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/text_register_link"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

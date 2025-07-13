@@ -7,175 +7,182 @@
     android:fillViewport="true"
     tools:context=".ui.profile.EditProfileFragment">
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="24dp">
+        android:padding="24dp"
+        android:background="@android:color/white">
 
         <!-- Header -->
         <TextView
-            android:layout_width="match_parent"
+            android:id="@+id/text_header"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Edit Profile"
             android:textSize="24sp"
             android:textStyle="bold"
-            android:gravity="center"
-            android:layout_marginBottom="32dp" />
+            android:textColor="#333333"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
-        <!-- Profile Picture Section -->
-        <LinearLayout
-            android:layout_width="match_parent"
+        <!-- Profile Image -->
+        <ImageView
+            android:id="@+id/image_profile_edit"
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:layout_marginTop="24dp"
+            android:src="@android:drawable/ic_menu_gallery"
+            android:contentDescription="Profile picture"
+            android:scaleType="centerCrop"
+            app:layout_constraintTop_toBottomOf="@id/text_header"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <!-- Change Picture Button -->
+        <Button
+            android:id="@+id/button_change_picture"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:layout_marginBottom="32dp">
+            android:text="Change Picture"
+            android:textSize="14sp"
+            android:layout_marginTop="8dp"
+            app:layout_constraintTop_toBottomOf="@id/image_profile_edit"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
-            <ImageView
-                android:id="@+id/image_profile_edit"
-                android:layout_width="120dp"
-                android:layout_height="120dp"
-                android:background="@android:drawable/ic_menu_gallery"
-                android:contentDescription="Profile picture"
-                android:scaleType="centerCrop"
-                android:layout_marginBottom="16dp" />
-
-            <Button
-                android:id="@+id/button_change_picture"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="📷 Change Picture"
-                android:textSize="14sp" />
-
-        </LinearLayout>
-
-        <!-- Basic Information -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Basic Information"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="16dp" />
-
+        <!-- Full Name Input -->
         <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
+            android:id="@+id/input_full_name"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
             android:hint="Full Name"
-            app:startIconDrawable="@android:drawable/ic_menu_edit">
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            app:boxBackgroundColor="#00000000"
+            app:boxStrokeColor="#DDDDDD"
+            app:startIconDrawable="@android:drawable/ic_menu_edit"
+            android:layout_marginTop="32dp"
+            app:layout_constraintTop_toBottomOf="@id/button_change_picture"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/edit_text_name"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textPersonName" />
-
+                android:inputType="textPersonName"
+                android:textColor="#666666" />
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- Email Input -->
         <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
+            android:id="@+id/input_email"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
             android:hint="Email Address"
-            app:startIconDrawable="@android:drawable/ic_dialog_email">
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            app:boxBackgroundColor="#00000000"
+            app:boxStrokeColor="#DDDDDD"
+            app:startIconDrawable="@android:drawable/ic_dialog_email"
+            android:layout_marginTop="16dp"
+            app:layout_constraintTop_toBottomOf="@id/input_full_name"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/edit_text_email"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textEmailAddress" />
-
+                android:inputType="textEmailAddress"
+                android:textColor="#666666" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- ADDED: Password Section -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="🔒 Change Password (Optional)"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="16dp" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Leave password fields empty if you don't want to change your password"
-            android:textSize="12sp"
-            android:textColor="@android:color/darker_gray"
-            android:layout_marginBottom="16dp" />
-
+        <!-- Current Password Input -->
         <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
+            android:id="@+id/input_current_password"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
             android:hint="Current Password"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             app:passwordToggleEnabled="true"
-            app:startIconDrawable="@android:drawable/ic_lock_lock">
+            app:boxBackgroundColor="#00000000"
+            app:boxStrokeColor="#DDDDDD"
+            app:startIconDrawable="@android:drawable/ic_lock_lock"
+            android:layout_marginTop="16dp"
+            app:layout_constraintTop_toBottomOf="@id/input_email"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/edit_text_current_password"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textPassword" />
-
+                android:inputType="textPassword"
+                android:textColor="#666666" />
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- New Password Input -->
         <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
+            android:id="@+id/input_new_password"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="32dp"
-            android:hint="New Password (min 6 characters)"
+            android:hint="New Password"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             app:passwordToggleEnabled="true"
-            app:startIconDrawable="@android:drawable/ic_lock_lock">
+            app:boxBackgroundColor="#00000000"
+            app:boxStrokeColor="#DDDDDD"
+            app:startIconDrawable="@android:drawable/ic_lock_lock"
+            android:layout_marginTop="16dp"
+            app:layout_constraintTop_toBottomOf="@id/input_current_password"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/edit_text_new_password"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textPassword" />
-
+                android:inputType="textPassword"
+                android:textColor="#666666" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Action Buttons -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:layout_marginTop="16dp">
+        <!-- Save Button -->
+        <Button
+            android:id="@+id/button_save"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:text="Save Changes"
+            android:textSize="16sp"
+            android:backgroundTint="#4285F4"
+            android:textColor="@android:color/white"
+            android:layout_marginTop="32dp"
+            app:layout_constraintTop_toBottomOf="@id/input_new_password"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
-            <Button
-                android:id="@+id/button_cancel"
-                android:layout_width="0dp"
-                android:layout_height="56dp"
-                android:layout_weight="1"
-                android:layout_marginEnd="8dp"
-                android:text="Cancel"
-                android:backgroundTint="@android:color/darker_gray"
-                android:textColor="@android:color/white"
-                android:textSize="16sp" />
+        <!-- Cancel Button -->
+        <Button
+            android:id="@+id/button_cancel"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:text="Cancel"
+            android:textSize="16sp"
+            android:backgroundTint="#F4B400"
+            android:textColor="@android:color/white"
+            android:layout_marginTop="16dp"
+            app:layout_constraintTop_toBottomOf="@id/button_save"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
-            <Button
-                android:id="@+id/button_save"
-                android:layout_width="0dp"
-                android:layout_height="56dp"
-                android:layout_weight="1"
-                android:layout_marginStart="8dp"
-                android:text="💾 Save Changes"
-                android:textSize="16sp" />
-
-        </LinearLayout>
-
-        <!-- ADDED: Progress Bar -->
+        <!-- Progress Bar -->
         <ProgressBar
             android:id="@+id/progress_bar_edit"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
             android:layout_marginTop="24dp"
-            android:visibility="gone" />
+            android:visibility="gone"
+            app:layout_constraintTop_toBottomOf="@id/button_cancel"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
-    </LinearLayout>
-
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>
