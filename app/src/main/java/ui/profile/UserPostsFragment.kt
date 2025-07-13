@@ -62,20 +62,28 @@ class UserPostsFragment : Fragment() {
 
         postAdapter.setOnItemClickListener(object : PostAdapter.OnItemClickListener {
             override fun onItemClick(position: Int) {
+                // Navigate to edit post
                 val postPair = postAdapter.getPost(position)
-                val post = postPair.second
-                Toast.makeText(context, "Clicked: ${post.birdSpecies}", Toast.LENGTH_SHORT).show()
+                navigateToEditPost(postPair)
             }
 
             override fun onMapClick(latitude: Double, longitude: Double) {
-                Toast.makeText(context, "Lat: $latitude, Lon: $longitude", Toast.LENGTH_SHORT).show()
+                // Navigate to map
+                try {
+                    val action = UserPostsFragmentDirections.actionUserPostsToPostMap(
+                        latitude.toFloat(),
+                        longitude.toFloat()
+                    )
+                    findNavController().navigate(action)
+                } catch (e: Exception) {
+                    Toast.makeText(context, "Navigation error: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
             }
         })
 
         recyclerView.layoutManager = LinearLayoutManager(context)
         recyclerView.adapter = postAdapter
     }
-
 
     private fun setupSwipeRefresh() {
         swipeRefresh.setOnRefreshListener {
@@ -130,7 +138,7 @@ class UserPostsFragment : Fragment() {
             textNoPosts.visibility = View.GONE
             recyclerView.visibility = View.VISIBLE
             textPostCount.visibility = View.VISIBLE
-            textPostCount.text = "No. of posts: ${posts.size}" // <-- NEW
+            textPostCount.text = "No. of posts: ${posts.size}"
             postAdapter.setPosts(posts)
         }
     }

@@ -103,7 +103,20 @@
         <action
             android:id="@+id/action_user_posts_to_add_post"
             app:destination="@id/addPostFragment" />
+
+        <!-- ✅ ADD THIS ACTION -->
+        <action
+            android:id="@+id/action_user_posts_to_post_map"
+            app:destination="@id/postMapFragment">
+            <argument
+                android:name="latitude"
+                app:argType="float" />
+            <argument
+                android:name="longitude"
+                app:argType="float" />
+        </action>
     </fragment>
+
 
     <!-- Add Post Fragment -->
     <fragment
