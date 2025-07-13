@@ -19,7 +19,6 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import androidx.navigation.fragment.findNavController
 
-
 class MyPostsFragment : Fragment() {
 
     private lateinit var recyclerView: RecyclerView
@@ -56,11 +55,12 @@ class MyPostsFragment : Fragment() {
     private fun setupRecyclerView() {
         postAdapter = PostAdapter()
 
+        // REMOVED: onItemClick for general feed - users can't click on posts
+        // KEPT: onMapClick only - users can still view posts on map
         postAdapter.setOnItemClickListener(object : PostAdapter.OnItemClickListener {
             override fun onItemClick(position: Int) {
-                val postPair = postAdapter.getPost(position)
-                val post = postPair.second
-                Toast.makeText(context, "Clicked: ${post.birdSpecies}", Toast.LENGTH_SHORT).show()
+                // REMOVED: No action on post click in general feed
+                // This prevents users from clicking on posts in the general feed
             }
 
             override fun onMapClick(latitude: Double, longitude: Double) {
@@ -70,13 +70,11 @@ class MyPostsFragment : Fragment() {
                 )
                 findNavController().navigate(action)
             }
-
         })
 
         recyclerView.layoutManager = LinearLayoutManager(context)
         recyclerView.adapter = postAdapter
     }
-
 
     private fun listenForPosts() {
         showLoading(true)

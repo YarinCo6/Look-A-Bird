@@ -6,6 +6,7 @@
     android:layout_height="match_parent"
     tools:context=".ui.map.PostMapFragment">
 
+    <!-- Map Container -->
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/mapView"
         android:name="com.google.android.gms.maps.SupportMapFragment"
@@ -15,5 +16,18 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Back Button -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab_back"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:src="@android:drawable/ic_menu_revert"
+        android:contentDescription="Go back"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:backgroundTint="@android:color/white"
+        app:tint="@android:color/black" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
