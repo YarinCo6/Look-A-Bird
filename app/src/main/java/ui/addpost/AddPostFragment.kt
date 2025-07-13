@@ -43,6 +43,9 @@ class AddPostFragment : Fragment() {
     private var selectedBird: BirdSpecies? = null
     private var searchJob: Job? = null
 
+    // ADDED: Fix for AutoComplete selection
+    private var isSelecting = false
+
     private val birdSuggestionsMap = linkedMapOf<String, BirdSpecies>()
     private lateinit var birdAdapter: ArrayAdapter<String>
 
@@ -104,6 +107,9 @@ class AddPostFragment : Fragment() {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: android.text.Editable?) {
+                // FIXED: Don't search while selecting
+                if (isSelecting) return
+
                 val query = s.toString().trim()
                 if (query.length >= 2) {
                     searchBirds(query)
@@ -114,6 +120,9 @@ class AddPostFragment : Fragment() {
         })
 
         autoCompleteBirdName.setOnItemClickListener { _, _, position, _ ->
+            // ADDED: Prevent TextWatcher from interfering
+            isSelecting = true
+
             val selectedName = birdAdapter.getItem(position)
             val selected = birdSuggestionsMap[selectedName]
             if (selected != null) {
@@ -123,6 +132,11 @@ class AddPostFragment : Fragment() {
                 autoCompleteBirdName.dismissDropDown()
                 Toast.makeText(context, "Selected: ${selected.commonName}", Toast.LENGTH_SHORT).show()
             }
+
+            // ADDED: Reset flag after a short delay
+            view?.postDelayed({
+                isSelecting = false
+            }, 100)
         }
     }
 

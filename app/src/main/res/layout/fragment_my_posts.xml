@@ -10,6 +10,7 @@
         android:id="@+id/swipe_refresh"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:contentDescription="Swipe down to refresh posts"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -20,6 +21,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:padding="8dp"
+            android:contentDescription="List of all bird sighting posts"
             tools:listitem="@layout/item_post" />
 
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
@@ -29,6 +31,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:visibility="gone"
+        android:contentDescription="Loading"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -41,10 +44,10 @@
         android:text="You haven't posted anything yet"
         android:textSize="18sp"
         android:visibility="gone"
+        android:contentDescription="No posts available message"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
-
 
 </androidx.constraintlayout.widget.ConstraintLayout>

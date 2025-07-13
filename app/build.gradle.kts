@@ -60,9 +60,10 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycleVersion")
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:$lifecycleVersion")
 
-    // Image Loading (Glide replaces Picasso)
+    // Image Loading - BOTH Glide and Picasso for compatibility
     implementation("com.github.bumptech.glide:glide:4.16.0")
     annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
+    implementation("com.squareup.picasso:picasso:2.8") // For ProfileFragment compatibility
 
     // Swipe to Refresh
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
@@ -86,9 +87,7 @@ dependencies {
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 
-    // Mapping
+    // Mapping (FIXED: removed duplicate)
     implementation("com.google.android.gms:play-services-maps:18.2.0")
     implementation("com.google.android.gms:play-services-location:21.0.1")
-    implementation("com.google.android.gms:play-services-maps:18.2.0")
-
 }
