@@ -15,7 +15,7 @@ import com.google.android.material.textfield.TextInputEditText
 import androidx.navigation.fragment.findNavController
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.UserProfileChangeRequest
-
+import com.google.firebase.firestore.FirebaseFirestore
 
 class RegisterFragment : Fragment() {
 
@@ -76,18 +76,42 @@ class RegisterFragment : Fragment() {
             .createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    // Set display name
+                    val user = FirebaseAuth.getInstance().currentUser
+                    val userId = user?.uid ?: ""
+
+                    // Update display name
                     val profileUpdates = UserProfileChangeRequest.Builder()
                         .setDisplayName(fullName)
                         .build()
 
-                    val user = FirebaseAuth.getInstance().currentUser
                     user?.updateProfile(profileUpdates)?.addOnCompleteListener { updateTask ->
-                        showLoading(false)
                         if (updateTask.isSuccessful) {
-                            Toast.makeText(context, "Registration successful!", Toast.LENGTH_SHORT).show()
-                            navigateToHome()
+                            // Also create Firestore user profile document
+                            val userDoc = FirebaseFirestore.getInstance()
+                                .collection("users")
+                                .document(userId)
+
+                            val data = mapOf(
+                                "name" to fullName,
+                                "profileImageUrl" to "" // You can set a default later
+                            )
+
+                            userDoc.set(data)
+                                .addOnSuccessListener {
+                                    showLoading(false)
+                                    Toast.makeText(context, "Registration successful!", Toast.LENGTH_SHORT).show()
+                                    navigateToHome()
+                                }
+                                .addOnFailureListener { e ->
+                                    showLoading(false)
+                                    Toast.makeText(
+                                        context,
+                                        "Error saving profile: ${e.message}",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                }
                         } else {
+                            showLoading(false)
                             Toast.makeText(
                                 context,
                                 "Error updating profile: ${updateTask.exception?.message}",
@@ -104,9 +128,7 @@ class RegisterFragment : Fragment() {
                     ).show()
                 }
             }
-
     }
-
 
     private fun validateInput(fullName: String, email: String, password: String, confirmPassword: String): Boolean {
         if (fullName.isEmpty()) {
@@ -152,29 +174,15 @@ class RegisterFragment : Fragment() {
         return true
     }
 
-    private fun simulateRegister(fullName: String, email: String, password: String) {
-        // Simulate registration - will replace with Firebase
-        view?.postDelayed({
-            showLoading(false)
-
-            // This is just for testing - will replace with real registration
-            Toast.makeText(context, "Registration successful! Welcome $fullName", Toast.LENGTH_SHORT).show()
-            navigateToHome()
-        }, 2000)
-    }
-
     private fun navigateToLogin() {
         val action = RegisterFragmentDirections.actionRegisterToLogin()
         findNavController().navigate(action)
     }
 
-
-
     private fun navigateToHome() {
         val action = RegisterFragmentDirections.actionRegisterToHome()
         findNavController().navigate(action)
     }
-
 
     private fun showLoading(show: Boolean) {
         progressBar.visibility = if (show) View.VISIBLE else View.GONE

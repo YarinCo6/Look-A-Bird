@@ -26,6 +26,7 @@ import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.coroutines.cancellation.CancellationException
 
 class AddPostFragment : Fragment() {
 
@@ -156,8 +157,13 @@ class AddPostFragment : Fragment() {
                     else -> {}
                 }
             } catch (e: Exception) {
-                Toast.makeText(context, "Network error: ${e.message}", Toast.LENGTH_SHORT).show()
+                if (e is CancellationException) {
+                    // ignore, its to make sure there is no error with the if
+                } else {
+                    Toast.makeText(context, "Network error: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
             }
+
             birdSearchProgress.visibility = View.GONE
         }
     }
