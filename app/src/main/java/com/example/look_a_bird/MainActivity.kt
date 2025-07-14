@@ -8,11 +8,13 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.NavigationUI
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.FirebaseApp
+import com.google.firebase.auth.FirebaseAuth
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var navController: NavController
     private lateinit var bottomNavigation: BottomNavigationView
+    private val auth = FirebaseAuth.getInstance()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -21,6 +23,7 @@ class MainActivity : AppCompatActivity() {
 
         setupNavigation()
         setupBottomNavigation()
+        checkAuthState()
     }
 
     private fun setupNavigation() {
@@ -40,6 +43,16 @@ class MainActivity : AppCompatActivity() {
                 else -> View.VISIBLE
             }
         }
+    }
+
+    private fun checkAuthState() {
+        // Check if user is already logged in
+        val currentUser = auth.currentUser
+        if (currentUser != null) {
+            // User is logged in - navigate to home
+            navController.navigate(R.id.action_global_home)
+        }
+        // If user is null, stay on login screen (default start destination)
     }
 
     override fun onSupportNavigateUp(): Boolean {
