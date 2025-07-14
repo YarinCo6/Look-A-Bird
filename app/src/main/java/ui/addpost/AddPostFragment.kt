@@ -14,7 +14,6 @@ import android.widget.*
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import androidx.navigation.fragment.navArgs
 import com.example.look_a_bird.R
 import com.example.look_a_bird.api.ApiRepository
 import com.example.look_a_bird.api.ApiResult
@@ -27,7 +26,6 @@ import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.coroutines.cancellation.CancellationException
 
 class AddPostFragment : Fragment() {
 
@@ -39,7 +37,6 @@ class AddPostFragment : Fragment() {
     private lateinit var progressBar: ProgressBar
     private lateinit var birdSearchProgress: ProgressBar
 
-    private val args: AddPostFragmentArgs by navArgs()
     private val apiRepository = ApiRepository.getInstance()
     private val db = FirebaseFirestore.getInstance()
     private val storage = FirebaseStorage.getInstance()
@@ -149,8 +146,7 @@ class AddPostFragment : Fragment() {
 
     private fun searchBirds(query: String) {
         searchJob?.cancel()
-        searchJob = lifecycleScope.launch {
-            delay(300)
+        searchJob = lifecycleScope.launch { delay(300)
             birdSearchProgress.visibility = View.VISIBLE
                 when (val result = apiRepository.searchBirds(query)) {
                     is ApiResult.Success -> updateBirdSuggestions(result.data)
