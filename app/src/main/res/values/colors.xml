@@ -7,4 +7,8 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="Post">#248E31</color>
+    <color name="Edit">#4285F6</color>
+    <color name="Cancel">#E29816</color>
+    <color name="Menu">#B3FFE1</color>
 </resources>

@@ -91,12 +91,13 @@
         android:id="@+id/button_login"
         android:layout_width="0dp"
         android:layout_height="56dp"
+        android:layout_marginTop="24dp"
         android:text="Login"
         android:textSize="16sp"
-        app:layout_constraintTop_toBottomOf="@id/text_input_password"
-        android:layout_marginTop="24dp"
+        app:backgroundTint="@color/Post"
+        app:layout_constraintEnd_toEndOf="@id/text_input_password"
         app:layout_constraintStart_toStartOf="@id/text_input_password"
-        app:layout_constraintEnd_toEndOf="@id/text_input_password" />
+        app:layout_constraintTop_toBottomOf="@id/text_input_password" />
 
     <!-- Register Link -->
     <TextView

@@ -67,6 +67,7 @@
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:layout_marginBottom="12dp"
+            android:backgroundTint="@color/Edit"
             android:text="Edit Profile"
             android:textSize="16sp" />
 
@@ -75,6 +76,7 @@
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:layout_marginBottom="12dp"
+            android:backgroundTint="@color/Post"
             android:text="My Posts"
             android:textSize="16sp" />
 
@@ -83,7 +85,7 @@
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:layout_marginTop="24dp"
-            android:backgroundTint="@android:color/holo_red_light"
+            android:backgroundTint="@color/Cancel"
             android:text="Logout"
             android:textColor="@android:color/white"
             android:textSize="16sp" />
