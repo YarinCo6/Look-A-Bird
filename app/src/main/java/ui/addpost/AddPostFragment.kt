@@ -21,12 +21,12 @@ import com.example.look_a_bird.api.ApiResult
 import com.example.look_a_bird.api.BirdSpecies
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.coroutines.cancellation.CancellationException
 
 class AddPostFragment : Fragment() {
 
@@ -40,6 +40,9 @@ class AddPostFragment : Fragment() {
 
     private val args: AddPostFragmentArgs by navArgs()
     private val apiRepository = ApiRepository.getInstance()
+    private val db = FirebaseFirestore.getInstance()
+    private val storage = FirebaseStorage.getInstance()
+    private val auth = FirebaseAuth.getInstance()
 
     private var selectedImageUri: String = ""
     private var selectedBird: BirdSpecies? = null
@@ -66,7 +69,6 @@ class AddPostFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         setupViews(view)
         setupBirdSearch()
         setupClickListeners()
@@ -76,8 +78,7 @@ class AddPostFragment : Fragment() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_IMAGE_PICK && resultCode == Activity.RESULT_OK) {
-            val uri = data?.data
-            if (uri != null) {
+            data?.data?.let { uri ->
                 selectedImageUri = uri.toString()
                 imagePostPreview.setImageURI(uri)
             }
@@ -157,13 +158,8 @@ class AddPostFragment : Fragment() {
                     else -> {}
                 }
             } catch (e: Exception) {
-                if (e is CancellationException) {
-                    // ignore, its to make sure there is no error with the if
-                } else {
-                    Toast.makeText(context, "Network error: ${e.message}", Toast.LENGTH_SHORT).show()
-                }
+                Toast.makeText(context, "Network error: ${e.message}", Toast.LENGTH_SHORT).show()
             }
-
             birdSearchProgress.visibility = View.GONE
         }
     }
@@ -174,13 +170,11 @@ class AddPostFragment : Fragment() {
             == PackageManager.PERMISSION_GRANTED) {
             fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
                 .addOnSuccessListener { location ->
-                    if (location != null) {
-                        currentLatitude = location.latitude
-                        currentLongitude = location.longitude
-                        Toast.makeText(context, "Location acquired: $currentLatitude, $currentLongitude", Toast.LENGTH_SHORT).show()
-                    } else {
-                        Toast.makeText(context, "Unable to get location", Toast.LENGTH_SHORT).show()
-                    }
+                    location?.let {
+                        currentLatitude = it.latitude
+                        currentLongitude = it.longitude
+                        Toast.makeText(context, "Location acquired", Toast.LENGTH_SHORT).show()
+                    } ?: Toast.makeText(context, "Unable to get location", Toast.LENGTH_SHORT).show()
                 }
         }
     }
@@ -191,8 +185,7 @@ class AddPostFragment : Fragment() {
     }
 
     private fun selectImage() {
-        val intent = Intent(Intent.ACTION_GET_CONTENT)
-        intent.type = "image/*"
+        val intent = Intent(Intent.ACTION_GET_CONTENT).apply { type = "image/*" }
         startActivityForResult(intent, REQUEST_IMAGE_PICK)
     }
 
@@ -203,30 +196,22 @@ class AddPostFragment : Fragment() {
         if (!validateInput(birdName, description)) return
 
         showLoading(true)
-
         savePostInternal(birdName, description)
     }
 
     private fun savePostInternal(birdName: String, description: String) {
-        val currentUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
-        val userId = currentUser?.uid ?: ""
+        val userId = auth.currentUser?.uid ?: ""
 
-        FirebaseFirestore.getInstance()
-            .collection("users")
-            .document(userId)
+        db.collection("users").document(userId)
             .get()
             .addOnSuccessListener { doc ->
                 val userName = doc.getString("name") ?: "Anonymous"
                 val userProfileImage = doc.getString("profileImageUrl") ?: ""
 
                 if (selectedImageUri.isNotEmpty()) {
-                    uploadImageAndSavePost(
-                        birdName, description, userId, userName, userProfileImage
-                    )
+                    uploadImageAndSavePost(birdName, description, userId, userName, userProfileImage)
                 } else {
-                    savePostToFirestore(
-                        birdName, description, userId, userName, userProfileImage, ""
-                    )
+                    savePostToFirestore(birdName, description, userId, userName, userProfileImage, "")
                 }
             }
             .addOnFailureListener { e ->
@@ -242,8 +227,7 @@ class AddPostFragment : Fragment() {
         userName: String,
         userProfileImage: String
     ) {
-        val storageRef = FirebaseStorage.getInstance()
-            .reference.child("post_images/${System.currentTimeMillis()}.jpg")
+        val storageRef = storage.reference.child("post_images/${System.currentTimeMillis()}.jpg")
 
         storageRef.putFile(Uri.parse(selectedImageUri))
             .continueWithTask { task ->
@@ -253,9 +237,7 @@ class AddPostFragment : Fragment() {
                 storageRef.downloadUrl
             }
             .addOnSuccessListener { downloadUri ->
-                savePostToFirestore(
-                    birdName, description, userId, userName, userProfileImage, downloadUri.toString()
-                )
+                savePostToFirestore(birdName, description, userId, userName, userProfileImage, downloadUri.toString())
             }
             .addOnFailureListener { e ->
                 showLoading(false)
@@ -284,8 +266,7 @@ class AddPostFragment : Fragment() {
             timestamp = com.google.firebase.Timestamp.now()
         )
 
-        FirebaseFirestore.getInstance()
-            .collection("posts")
+        db.collection("posts")
             .add(newPost)
             .addOnSuccessListener {
                 showLoading(false)

@@ -34,7 +34,6 @@ class ProfileFragment : Fragment() {
     private var currentUser: User? = null
     private val auth = FirebaseAuth.getInstance()
     private val db = FirebaseFirestore.getInstance()
-
     private var profileListener: ListenerRegistration? = null
 
     override fun onCreateView(
@@ -47,7 +46,6 @@ class ProfileFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         setupViews(view)
         setupClickListeners()
         loadUserProfile()
@@ -75,29 +73,19 @@ class ProfileFragment : Fragment() {
     }
 
     private fun setupClickListeners() {
-        buttonEditProfile.setOnClickListener {
-            navigateToEditProfile()
-        }
-
-        buttonMyPosts.setOnClickListener {
-            navigateToMyPosts()
-        }
-
-        buttonLogout.setOnClickListener {
-            performLogout()
-        }
+        buttonEditProfile.setOnClickListener { navigateToEditProfile() }
+        buttonMyPosts.setOnClickListener { navigateToMyPosts() }
+        buttonLogout.setOnClickListener { performLogout() }
     }
 
     private fun loadUserProfile() {
-        showLoading(true)
-
         val firebaseUser = auth.currentUser
         if (firebaseUser == null) {
-            showLoading(false)
             Toast.makeText(context, "No user logged in", Toast.LENGTH_SHORT).show()
             return
         }
 
+        showLoading(true)
         loadUserFromFirestore(firebaseUser.uid)
     }
 
@@ -106,21 +94,14 @@ class ProfileFragment : Fragment() {
             .get()
             .addOnSuccessListener { document ->
                 if (document.exists()) {
-                    try {
-                        currentUser = document.toObject(User::class.java)
-                        currentUser?.id = document.id
-                    } catch (e: Exception) {
-                        createUserFromFirebaseAuth()
-                    }
+                    currentUser = document.toObject(User::class.java)?.apply { id = document.id }
                 } else {
                     createUserFromFirebaseAuth()
                 }
-
                 showLoading(false)
                 populateUserData()
             }
-            .addOnFailureListener { exception ->
-                Toast.makeText(context, "Error loading profile: ${exception.message}", Toast.LENGTH_SHORT).show()
+            .addOnFailureListener {
                 createUserFromFirebaseAuth()
                 showLoading(false)
                 populateUserData()
@@ -128,38 +109,27 @@ class ProfileFragment : Fragment() {
     }
 
     private fun createUserFromFirebaseAuth() {
-        val firebaseUser = auth.currentUser
-        if (firebaseUser != null) {
-            currentUser = User(
-                id = firebaseUser.uid,
-                name = firebaseUser.displayName ?: "Anonymous",
-                email = firebaseUser.email ?: "No email",
-                profileImageUrl = firebaseUser.photoUrl?.toString() ?: "",
-                memberSince = firebaseUser.metadata?.creationTimestamp ?: System.currentTimeMillis(),
-            )
-        }
+        val firebaseUser = auth.currentUser ?: return
+        currentUser = User(
+            id = firebaseUser.uid,
+            name = firebaseUser.displayName ?: "Anonymous",
+            email = firebaseUser.email ?: "No email",
+            profileImageUrl = firebaseUser.photoUrl?.toString() ?: "",
+            memberSince = firebaseUser.metadata?.creationTimestamp ?: System.currentTimeMillis()
+        )
     }
 
     private fun startRealtimeUpdates() {
-        val firebaseUser = auth.currentUser
-        if (firebaseUser == null) return
+        val firebaseUser = auth.currentUser ?: return
 
         profileListener = db.collection("users").document(firebaseUser.uid)
             .addSnapshotListener { snapshot, error ->
-                if (error != null) return@addSnapshotListener
+                if (error != null || snapshot?.exists() != true) return@addSnapshotListener
 
-                if (snapshot != null && snapshot.exists()) {
-                    try {
-                        val updatedUser = snapshot.toObject(User::class.java)
-                        updatedUser?.id = snapshot.id
-
-                        if (updatedUser != null && updatedUser != currentUser) {
-                            currentUser = updatedUser
-                            populateUserData()
-                        }
-                    } catch (e: Exception) {
-                        // Ignore parsing errors
-                    }
+                val updatedUser = snapshot.toObject(User::class.java)?.apply { id = snapshot.id }
+                if (updatedUser != null && updatedUser != currentUser) {
+                    currentUser = updatedUser
+                    populateUserData()
                 }
             }
     }
@@ -179,52 +149,37 @@ class ProfileFragment : Fragment() {
     }
 
     private fun loadProfileImage(imageUrl: String) {
-        if (imageUrl.isNotEmpty() && imageUrl != "null") {
-            try {
-                Glide.with(this)
-                    .load(imageUrl)
-                    .placeholder(android.R.drawable.ic_menu_gallery)
-                    .error(android.R.drawable.ic_menu_gallery)
-                    .circleCrop()
-                    .into(imageProfilePicture)
-            } catch (e: Exception) {
-                imageProfilePicture.setImageResource(android.R.drawable.ic_menu_gallery)
-            }
+        if (imageUrl.isNotEmpty()) {
+            Glide.with(this)
+                .load(imageUrl)
+                .placeholder(android.R.drawable.ic_menu_gallery)
+                .error(android.R.drawable.ic_menu_gallery)
+                .circleCrop()
+                .into(imageProfilePicture)
         } else {
             imageProfilePicture.setImageResource(android.R.drawable.ic_menu_gallery)
         }
     }
 
     private fun formatMemberSince(timestamp: Long): String {
-        val date = Date(timestamp)
-        return SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(date)
+        return SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(Date(timestamp))
     }
 
     private fun navigateToEditProfile() {
-        try {
-            val action = ProfileFragmentDirections.actionProfileToEditProfile()
-            findNavController().navigate(action)
-        } catch (e: Exception) {
-            Toast.makeText(context, "Navigate to Edit Profile", Toast.LENGTH_SHORT).show()
-        }
+        val action = ProfileFragmentDirections.actionProfileToEditProfile()
+        findNavController().navigate(action)
     }
 
     private fun navigateToMyPosts() {
-        try {
-            val action = ProfileFragmentDirections.actionProfileToUserPosts()
-            findNavController().navigate(action)
-        } catch (e: Exception) {
-            Toast.makeText(context, "Navigation error", Toast.LENGTH_SHORT).show()
-        }
+        val action = ProfileFragmentDirections.actionProfileToUserPosts()
+        findNavController().navigate(action)
     }
 
     private fun performLogout() {
         android.app.AlertDialog.Builder(context)
             .setTitle("Logout")
             .setMessage("Are you sure you want to logout?")
-            .setPositiveButton("Logout") { _, _ ->
-                confirmLogout()
-            }
+            .setPositiveButton("Logout") { _, _ -> confirmLogout() }
             .setNegativeButton("Cancel", null)
             .show()
     }
@@ -232,12 +187,10 @@ class ProfileFragment : Fragment() {
     private fun confirmLogout() {
         showLoading(true)
         stopRealtimeUpdates()
-
-        FirebaseAuth.getInstance().signOut()
-
+        auth.signOut()
         showLoading(false)
-        Toast.makeText(context, "Logged out successfully!", Toast.LENGTH_SHORT).show()
 
+        Toast.makeText(context, "Logged out successfully!", Toast.LENGTH_SHORT).show()
         val action = ProfileFragmentDirections.actionGlobalLogout()
         findNavController().navigate(action)
     }

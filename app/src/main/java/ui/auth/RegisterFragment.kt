@@ -9,10 +9,10 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import com.example.look_a_bird.R
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
-import androidx.navigation.fragment.findNavController
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.firestore.FirebaseFirestore
@@ -27,6 +27,9 @@ class RegisterFragment : Fragment() {
     private lateinit var textLoginLink: TextView
     private lateinit var progressBar: ProgressBar
 
+    private val auth = FirebaseAuth.getInstance()
+    private val db = FirebaseFirestore.getInstance()
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -37,7 +40,6 @@ class RegisterFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         setupViews(view)
         setupClickListeners()
     }
@@ -53,13 +55,8 @@ class RegisterFragment : Fragment() {
     }
 
     private fun setupClickListeners() {
-        buttonRegister.setOnClickListener {
-            performRegister()
-        }
-
-        textLoginLink.setOnClickListener {
-            navigateToLogin()
-        }
+        buttonRegister.setOnClickListener { performRegister() }
+        textLoginLink.setOnClickListener { navigateToLogin() }
     }
 
     private fun performRegister() {
@@ -71,54 +68,10 @@ class RegisterFragment : Fragment() {
         if (!validateInput(fullName, email, password, confirmPassword)) return
 
         showLoading(true)
-
-        FirebaseAuth.getInstance()
-            .createUserWithEmailAndPassword(email, password)
+        auth.createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    val user = FirebaseAuth.getInstance().currentUser
-                    val userId = user?.uid ?: ""
-
-                    // Update display name
-                    val profileUpdates = UserProfileChangeRequest.Builder()
-                        .setDisplayName(fullName)
-                        .build()
-
-                    user?.updateProfile(profileUpdates)?.addOnCompleteListener { updateTask ->
-                        if (updateTask.isSuccessful) {
-                            // Also create Firestore user profile document
-                            val userDoc = FirebaseFirestore.getInstance()
-                                .collection("users")
-                                .document(userId)
-
-                            val data = mapOf(
-                                "name" to fullName,
-                                "profileImageUrl" to "" // You can set a default later
-                            )
-
-                            userDoc.set(data)
-                                .addOnSuccessListener {
-                                    showLoading(false)
-                                    Toast.makeText(context, "Registration successful!", Toast.LENGTH_SHORT).show()
-                                    navigateToHome()
-                                }
-                                .addOnFailureListener { e ->
-                                    showLoading(false)
-                                    Toast.makeText(
-                                        context,
-                                        "Error saving profile: ${e.message}",
-                                        Toast.LENGTH_LONG
-                                    ).show()
-                                }
-                        } else {
-                            showLoading(false)
-                            Toast.makeText(
-                                context,
-                                "Error updating profile: ${updateTask.exception?.message}",
-                                Toast.LENGTH_LONG
-                            ).show()
-                        }
-                    }
+                    updateUserProfile(fullName)
                 } else {
                     showLoading(false)
                     Toast.makeText(
@@ -127,6 +80,52 @@ class RegisterFragment : Fragment() {
                         Toast.LENGTH_LONG
                     ).show()
                 }
+            }
+    }
+
+    private fun updateUserProfile(fullName: String) {
+        val user = auth.currentUser ?: return
+        val profileUpdates = UserProfileChangeRequest.Builder()
+            .setDisplayName(fullName)
+            .build()
+
+        user.updateProfile(profileUpdates)
+            .addOnCompleteListener { updateTask ->
+                if (updateTask.isSuccessful) {
+                    createFirestoreProfile(user.uid, fullName)
+                } else {
+                    showLoading(false)
+                    Toast.makeText(
+                        context,
+                        "Error updating profile: ${updateTask.exception?.message}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+    }
+
+    private fun createFirestoreProfile(userId: String, fullName: String) {
+        val userData = mapOf(
+            "name" to fullName,
+            "email" to auth.currentUser?.email.orEmpty(),
+            "profileImageUrl" to "",
+            "memberSince" to System.currentTimeMillis()
+        )
+
+        db.collection("users").document(userId)
+            .set(userData)
+            .addOnSuccessListener {
+                showLoading(false)
+                Toast.makeText(context, "Registration successful!", Toast.LENGTH_SHORT).show()
+                navigateToHome()
+            }
+            .addOnFailureListener { e ->
+                showLoading(false)
+                Toast.makeText(
+                    context,
+                    "Error saving profile: ${e.message}",
+                    Toast.LENGTH_LONG
+                ).show()
             }
     }
 

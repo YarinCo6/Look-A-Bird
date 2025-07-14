@@ -9,12 +9,11 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import com.example.look_a_bird.R
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
-import androidx.navigation.fragment.findNavController
 import com.google.firebase.auth.FirebaseAuth
-
 
 class LoginFragment : Fragment() {
 
@@ -23,6 +22,8 @@ class LoginFragment : Fragment() {
     private lateinit var buttonLogin: MaterialButton
     private lateinit var textRegisterLink: TextView
     private lateinit var progressBar: ProgressBar
+
+    private val auth = FirebaseAuth.getInstance()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -34,7 +35,6 @@ class LoginFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         setupViews(view)
         setupClickListeners()
     }
@@ -48,13 +48,8 @@ class LoginFragment : Fragment() {
     }
 
     private fun setupClickListeners() {
-        buttonLogin.setOnClickListener {
-            performLogin()
-        }
-
-        textRegisterLink.setOnClickListener {
-            navigateToRegister()
-        }
+        buttonLogin.setOnClickListener { performLogin() }
+        textRegisterLink.setOnClickListener { navigateToRegister() }
     }
 
     private fun performLogin() {
@@ -64,9 +59,7 @@ class LoginFragment : Fragment() {
         if (!validateInput(email, password)) return
 
         showLoading(true)
-
-        FirebaseAuth.getInstance()
-            .signInWithEmailAndPassword(email, password)
+        auth.signInWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
                 showLoading(false)
                 if (task.isSuccessful) {
@@ -81,7 +74,6 @@ class LoginFragment : Fragment() {
                 }
             }
     }
-
 
     private fun validateInput(email: String, password: String): Boolean {
         if (email.isEmpty()) {
@@ -107,20 +99,6 @@ class LoginFragment : Fragment() {
         return true
     }
 
-    private fun simulateLogin(email: String, password: String) {
-        // Simulate login - will replace with Firebase
-        view?.postDelayed({
-            showLoading(false)
-
-            // This is just for testing - will replace with real authentication
-            if (email == "test@test.com" && password == "123456") {
-                navigateToHome()
-            } else {
-                Toast.makeText(context, "Invalid email or password", Toast.LENGTH_SHORT).show()
-            }
-        }, 2000)
-    }
-
     private fun navigateToRegister() {
         val action = LoginFragmentDirections.actionLoginToRegister()
         findNavController().navigate(action)
@@ -130,7 +108,6 @@ class LoginFragment : Fragment() {
         val action = LoginFragmentDirections.actionLoginToHome()
         findNavController().navigate(action)
     }
-
 
     private fun showLoading(show: Boolean) {
         progressBar.visibility = if (show) View.VISIBLE else View.GONE

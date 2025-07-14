@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
 import com.example.look_a_bird.R
@@ -18,14 +19,12 @@ import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
-import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class EditPostFragment : Fragment() {
 
-    // Views
     private lateinit var imagePostPreview: ImageView
     private lateinit var buttonChangeImage: Button
     private lateinit var autoCompleteBirdName: MaterialAutoCompleteTextView
@@ -36,17 +35,14 @@ class EditPostFragment : Fragment() {
     private lateinit var progressBar: ProgressBar
     private lateinit var birdSearchProgress: ProgressBar
 
-    // Firebase
     private val db = FirebaseFirestore.getInstance()
     private val storage = FirebaseStorage.getInstance()
 
-    // Data
     private var currentPost: Post? = null
     private var postId: String = ""
     private var selectedImageUri: Uri? = null
     private var isImageChanged = false
 
-    // iNaturalist Search
     private val apiRepository = ApiRepository.getInstance()
     private var selectedBird: BirdSpecies? = null
     private var searchJob: Job? = null
@@ -56,9 +52,7 @@ class EditPostFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        arguments?.let {
-            postId = it.getString("postId", "")
-        }
+        postId = arguments?.getString("postId", "") ?: ""
     }
 
     override fun onCreateView(
@@ -179,7 +173,6 @@ class EditPostFragment : Fragment() {
         }
 
         showLoading(true)
-
         db.collection("posts").document(postId)
             .get()
             .addOnSuccessListener { doc ->
@@ -191,7 +184,7 @@ class EditPostFragment : Fragment() {
             }
             .addOnFailureListener {
                 showLoading(false)
-                Toast.makeText(context, "Error loading post.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Error loading post", Toast.LENGTH_SHORT).show()
             }
     }
 
@@ -250,10 +243,7 @@ class EditPostFragment : Fragment() {
         }
 
         showLoading(true)
-
-        val scientificName = selectedBird?.scientificName
-            ?: currentPost?.scientificName
-            ?: ""
+        val scientificName = selectedBird?.scientificName ?: currentPost?.scientificName ?: ""
 
         if (isImageChanged && selectedImageUri != null) {
             val imageRef = storage.reference
@@ -267,7 +257,7 @@ class EditPostFragment : Fragment() {
                 }
                 .addOnFailureListener {
                     showLoading(false)
-                    Toast.makeText(context, "Image upload failed.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Image upload failed", Toast.LENGTH_SHORT).show()
                 }
         } else {
             updateFirestore(birdName, description, scientificName, currentPost?.imageUrl ?: "")
@@ -291,12 +281,12 @@ class EditPostFragment : Fragment() {
             .update(updates)
             .addOnSuccessListener {
                 showLoading(false)
-                Toast.makeText(context, "Post updated.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Post updated", Toast.LENGTH_SHORT).show()
                 findNavController().navigateUp()
             }
             .addOnFailureListener {
                 showLoading(false)
-                Toast.makeText(context, "Error updating post.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Error updating post", Toast.LENGTH_SHORT).show()
             }
     }
 
@@ -315,12 +305,12 @@ class EditPostFragment : Fragment() {
             .delete()
             .addOnSuccessListener {
                 showLoading(false)
-                Toast.makeText(context, "Post deleted.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Post deleted", Toast.LENGTH_SHORT).show()
                 findNavController().navigateUp()
             }
             .addOnFailureListener {
                 showLoading(false)
-                Toast.makeText(context, "Error deleting post.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Error deleting post", Toast.LENGTH_SHORT).show()
             }
     }
 

@@ -10,6 +10,7 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
@@ -17,7 +18,6 @@ import com.example.look_a_bird.R
 import com.example.look_a_bird.ui.adapter.PostAdapter
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
-import androidx.navigation.fragment.findNavController
 
 class MyPostsFragment : Fragment() {
 
@@ -39,7 +39,6 @@ class MyPostsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         setupViews(view)
         setupRecyclerView()
         listenForPosts()
@@ -55,12 +54,9 @@ class MyPostsFragment : Fragment() {
     private fun setupRecyclerView() {
         postAdapter = PostAdapter()
 
-        // REMOVED: onItemClick for general feed - users can't click on posts
-        // KEPT: onMapClick only - users can still view posts on map
         postAdapter.setOnItemClickListener(object : PostAdapter.OnItemClickListener {
             override fun onItemClick(position: Int) {
-                // REMOVED: No action on post click in general feed
-                // This prevents users from clicking on posts in the general feed
+                // No action - general feed posts are not clickable
             }
 
             override fun onMapClick(latitude: Double, longitude: Double) {
@@ -81,30 +77,27 @@ class MyPostsFragment : Fragment() {
 
         db.collection("posts")
             .orderBy("timestamp", Query.Direction.DESCENDING)
-            .addSnapshotListener { snapshots, e ->
-                if (e != null) {
-                    Toast.makeText(context, "Error loading posts: ${e.message}", Toast.LENGTH_SHORT).show()
-                    showLoading(false)
-                    swipeRefresh.isRefreshing = false
+            .addSnapshotListener { snapshots, error ->
+                showLoading(false)
+                swipeRefresh.isRefreshing = false
+
+                if (error != null) {
+                    Toast.makeText(context, "Error loading posts: ${error.message}", Toast.LENGTH_SHORT).show()
                     updateUI(emptyList())
                     return@addSnapshotListener
                 }
 
                 val posts = mutableListOf<Pair<String, Post>>()
-
-                for (doc in snapshots!!) {
+                snapshots?.forEach { doc ->
                     try {
                         val post = doc.toObject(Post::class.java)
                         posts.add(Pair(doc.id, post))
                     } catch (ex: Exception) {
-                        Log.e("Firestore", "Error parsing post: ${ex.message}")
-                        continue
+                        Log.e("MyPostsFragment", "Error parsing post: ${ex.message}")
                     }
                 }
 
                 updateUI(posts)
-                showLoading(false)
-                swipeRefresh.isRefreshing = false
             }
     }
 

@@ -8,11 +8,11 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.example.look_a_bird.R
 import com.google.firebase.Timestamp
 import java.text.SimpleDateFormat
 import java.util.*
-import com.bumptech.glide.Glide
 
 class PostAdapter : RecyclerView.Adapter<PostAdapter.PostViewHolder>() {
 
@@ -61,9 +61,7 @@ class PostAdapter : RecyclerView.Adapter<PostAdapter.PostViewHolder>() {
         private val buttonShowOnMap: Button = itemView.findViewById(R.id.button_show_on_map)
 
         init {
-            itemView.setOnClickListener {
-                listener?.onItemClick(adapterPosition)
-            }
+            itemView.setOnClickListener { listener?.onItemClick(adapterPosition) }
         }
 
         fun bind(item: Pair<String, Post>) {
@@ -79,37 +77,31 @@ class PostAdapter : RecyclerView.Adapter<PostAdapter.PostViewHolder>() {
                 post.birdSpecies
             }
 
-            if (post.imageUrl.isNotEmpty()) {
-                Glide.with(itemView.context)
-                    .load(post.imageUrl)
-                    .centerCrop()
-                    .into(imagePost)
-            } else {
-                imagePost.setImageDrawable(null)
-            }
-
-            if (post.userProfileImage.isNotEmpty()) {
-                Glide.with(itemView.context)
-                    .load(post.userProfileImage)
-                    .circleCrop()
-                    .into(imageUserProfile)
-            } else {
-                imageUserProfile.setImageDrawable(null)
-            }
+            loadImage(post.imageUrl, imagePost, centerCrop = true)
+            loadImage(post.userProfileImage, imageUserProfile, centerCrop = false)
 
             buttonShowOnMap.setOnClickListener {
                 listener?.onMapClick(post.latitude, post.longitude)
             }
         }
 
-        private fun formatTimestamp(timestamp: Timestamp?): String {
-            return if (timestamp != null) {
-                val date = timestamp.toDate()
-                val format = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
-                format.format(date)
+        private fun loadImage(imageUrl: String, imageView: ImageView, centerCrop: Boolean) {
+            if (imageUrl.isNotEmpty()) {
+                val glideRequest = Glide.with(itemView.context).load(imageUrl)
+                if (centerCrop) {
+                    glideRequest.centerCrop().into(imageView)
+                } else {
+                    glideRequest.circleCrop().into(imageView)
+                }
             } else {
-                "No Date"
+                imageView.setImageDrawable(null)
             }
+        }
+
+        private fun formatTimestamp(timestamp: Timestamp?): String {
+            return timestamp?.let {
+                SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(it.toDate())
+            } ?: "No Date"
         }
     }
 }
