@@ -22,6 +22,7 @@ import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.coroutines.cancellation.CancellationException
 
 class EditPostFragment : Fragment() {
 
@@ -136,7 +137,6 @@ class EditPostFragment : Fragment() {
         searchJob = lifecycleScope.launch {
             delay(300)
             birdSearchProgress.visibility = View.VISIBLE
-            try {
                 when (val result = apiRepository.searchBirds(query)) {
                     is ApiResult.Success -> updateBirdSuggestions(result.data)
                     is ApiResult.Error -> {
@@ -146,9 +146,6 @@ class EditPostFragment : Fragment() {
                     }
                     else -> {}
                 }
-            } catch (e: Exception) {
-                Toast.makeText(context, "Network error: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
             birdSearchProgress.visibility = View.GONE
         }
     }
