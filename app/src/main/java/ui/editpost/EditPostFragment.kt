@@ -1,6 +1,5 @@
 package com.example.look_a_bird.ui.editpost
 
-import Post
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -11,10 +10,13 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
+import com.example.look_a_bird.MainActivity
 import com.example.look_a_bird.R
 import com.example.look_a_bird.api.ApiRepository
 import com.example.look_a_bird.api.ApiResult
 import com.example.look_a_bird.api.BirdSpecies
+import com.example.look_a_bird.database.Repository
+import com.example.look_a_bird.model.Post
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.firestore.FirebaseFirestore
@@ -22,7 +24,6 @@ import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.coroutines.cancellation.CancellationException
 
 class EditPostFragment : Fragment() {
 
@@ -38,6 +39,7 @@ class EditPostFragment : Fragment() {
 
     private val db = FirebaseFirestore.getInstance()
     private val storage = FirebaseStorage.getInstance()
+    private lateinit var repository: Repository
 
     private var currentPost: Post? = null
     private var postId: String = ""
@@ -54,6 +56,7 @@ class EditPostFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         postId = arguments?.getString("postId", "") ?: ""
+        repository = (requireActivity() as MainActivity).getRepository()
     }
 
     override fun onCreateView(
@@ -137,6 +140,7 @@ class EditPostFragment : Fragment() {
         searchJob = lifecycleScope.launch {
             delay(300)
             birdSearchProgress.visibility = View.VISIBLE
+            try {
                 when (val result = apiRepository.searchBirds(query)) {
                     is ApiResult.Success -> updateBirdSuggestions(result.data)
                     is ApiResult.Error -> {
@@ -146,7 +150,9 @@ class EditPostFragment : Fragment() {
                     }
                     else -> {}
                 }
-            birdSearchProgress.visibility = View.GONE
+            } finally {
+                birdSearchProgress.visibility = View.GONE
+            }
         }
     }
 
@@ -174,8 +180,10 @@ class EditPostFragment : Fragment() {
             .get()
             .addOnSuccessListener { doc ->
                 if (doc.exists()) {
-                    currentPost = doc.toObject(Post::class.java)
-                    populateFields()
+                    doc.data?.let { data ->
+                        currentPost = Post.fromFirestore(doc.id, data)
+                        populateFields()
+                    }
                 }
                 showLoading(false)
             }
@@ -249,7 +257,7 @@ class EditPostFragment : Fragment() {
             imageRef.putFile(selectedImageUri!!)
                 .addOnSuccessListener {
                     imageRef.downloadUrl.addOnSuccessListener { downloadUrl ->
-                        updateFirestore(birdName, description, scientificName, downloadUrl.toString())
+                        updatePost(birdName, description, scientificName, downloadUrl.toString())
                     }
                 }
                 .addOnFailureListener {
@@ -257,34 +265,36 @@ class EditPostFragment : Fragment() {
                     Toast.makeText(context, "Image upload failed", Toast.LENGTH_SHORT).show()
                 }
         } else {
-            updateFirestore(birdName, description, scientificName, currentPost?.imageUrl ?: "")
+            updatePost(birdName, description, scientificName, currentPost?.imageUrl ?: "")
         }
     }
 
-    private fun updateFirestore(
+    private fun updatePost(
         birdName: String,
         description: String,
         scientificName: String,
         imageUrl: String
     ) {
-        val updates = mapOf(
-            "birdSpecies" to birdName,
-            "scientificName" to scientificName,
-            "description" to description,
-            "imageUrl" to imageUrl
-        )
+        currentPost?.let { post ->
+            val updatedPost = post.copy(
+                birdSpecies = birdName,
+                scientificName = scientificName,
+                description = description,
+                imageUrl = imageUrl
+            )
 
-        db.collection("posts").document(postId)
-            .update(updates)
-            .addOnSuccessListener {
-                showLoading(false)
-                Toast.makeText(context, "Post updated", Toast.LENGTH_SHORT).show()
-                findNavController().navigateUp()
+            lifecycleScope.launch {
+                try {
+                    repository.updatePost(updatedPost)
+                    showLoading(false)
+                    Toast.makeText(context, "Post updated", Toast.LENGTH_SHORT).show()
+                    findNavController().navigateUp()
+                } catch (e: Exception) {
+                    showLoading(false)
+                    Toast.makeText(context, "Error updating post", Toast.LENGTH_SHORT).show()
+                }
             }
-            .addOnFailureListener {
-                showLoading(false)
-                Toast.makeText(context, "Error updating post", Toast.LENGTH_SHORT).show()
-            }
+        }
     }
 
     private fun confirmDelete() {
@@ -298,17 +308,17 @@ class EditPostFragment : Fragment() {
 
     private fun deletePost() {
         showLoading(true)
-        db.collection("posts").document(postId)
-            .delete()
-            .addOnSuccessListener {
+        lifecycleScope.launch {
+            try {
+                repository.deletePost(postId)
                 showLoading(false)
                 Toast.makeText(context, "Post deleted", Toast.LENGTH_SHORT).show()
                 findNavController().navigateUp()
-            }
-            .addOnFailureListener {
+            } catch (e: Exception) {
                 showLoading(false)
                 Toast.makeText(context, "Error deleting post", Toast.LENGTH_SHORT).show()
             }
+        }
     }
 
     private fun showLoading(show: Boolean) {

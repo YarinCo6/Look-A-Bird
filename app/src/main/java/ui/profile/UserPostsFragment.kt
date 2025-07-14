@@ -1,8 +1,6 @@
 package com.example.look_a_bird.ui.profile
 
-import Post
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,15 +8,18 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.example.look_a_bird.MainActivity
 import com.example.look_a_bird.R
+import com.example.look_a_bird.database.Repository
+import com.example.look_a_bird.model.Post
 import com.example.look_a_bird.ui.adapter.PostAdapter
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.Query
+import kotlinx.coroutines.launch
 
 class UserPostsFragment : Fragment() {
 
@@ -28,8 +29,8 @@ class UserPostsFragment : Fragment() {
     private lateinit var textNoPosts: TextView
     private lateinit var textPostCount: TextView
     private lateinit var postAdapter: PostAdapter
+    private lateinit var repository: Repository
 
-    private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
 
     override fun onCreateView(
@@ -43,10 +44,13 @@ class UserPostsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // Initialize repository
+        repository = (requireActivity() as MainActivity).getRepository()
+
         setupViews(view)
         setupRecyclerView()
         setupSwipeRefresh()
-        loadUserPosts()
+        observeUserPosts()
     }
 
     private fun setupViews(view: View) {
@@ -63,8 +67,8 @@ class UserPostsFragment : Fragment() {
         postAdapter.setOnItemClickListener(object : PostAdapter.OnItemClickListener {
             override fun onItemClick(position: Int) {
                 // Navigate to edit post
-                val postPair = postAdapter.getPost(position)
-                navigateToEditPost(postPair)
+                val post = postAdapter.getPost(position)
+                navigateToEditPost(post.id)
             }
 
             override fun onMapClick(latitude: Double, longitude: Double) {
@@ -87,11 +91,11 @@ class UserPostsFragment : Fragment() {
 
     private fun setupSwipeRefresh() {
         swipeRefresh.setOnRefreshListener {
-            loadUserPosts()
+            refreshPosts()
         }
     }
 
-    private fun loadUserPosts() {
+    private fun observeUserPosts() {
         val currentUser = auth.currentUser
         if (currentUser == null) {
             Toast.makeText(context, "Please log in to view your posts", Toast.LENGTH_SHORT).show()
@@ -100,36 +104,30 @@ class UserPostsFragment : Fragment() {
 
         showLoading(true)
 
-        db.collection("posts")
-            .whereEqualTo("userId", currentUser.uid)
-            .orderBy("timestamp", Query.Direction.DESCENDING)
-            .get()
-            .addOnSuccessListener { documents ->
-                val posts = mutableListOf<Pair<String, Post>>()
-
-                for (document in documents) {
-                    try {
-                        val post = document.toObject(Post::class.java)
-                        posts.add(Pair(document.id, post))
-                    } catch (e: Exception) {
-                        Log.e("Firestore", "Error parsing post: ${e.message}")
-                        continue
-                    }
-                }
-
-                updateUI(posts)
-                showLoading(false)
-                swipeRefresh.isRefreshing = false
-            }
-            .addOnFailureListener { exception ->
-                Toast.makeText(context, "Error loading posts: ${exception.message}", Toast.LENGTH_SHORT).show()
-                showLoading(false)
-                swipeRefresh.isRefreshing = false
-                updateUI(emptyList())
-            }
+        // Observe user's posts from repository
+        repository.getPostsByUser(currentUser.uid).observe(viewLifecycleOwner) { posts ->
+            showLoading(false)
+            swipeRefresh.isRefreshing = false
+            updateUI(posts)
+        }
     }
 
-    private fun updateUI(posts: List<Pair<String, Post>>) {
+    private fun refreshPosts() {
+        swipeRefresh.isRefreshing = true
+
+        lifecycleScope.launch {
+            try {
+                repository.syncPosts()
+                repository.syncUsers()
+            } catch (e: Exception) {
+                Toast.makeText(context, "Error refreshing posts", Toast.LENGTH_SHORT).show()
+            } finally {
+                swipeRefresh.isRefreshing = false
+            }
+        }
+    }
+
+    private fun updateUI(posts: List<Post>) {
         if (posts.isEmpty()) {
             textNoPosts.visibility = View.VISIBLE
             recyclerView.visibility = View.GONE
@@ -147,8 +145,7 @@ class UserPostsFragment : Fragment() {
         progressBar.visibility = if (show) View.VISIBLE else View.GONE
     }
 
-    private fun navigateToEditPost(postPair: Pair<String, Post>) {
-        val postId = postPair.first
+    private fun navigateToEditPost(postId: String) {
         try {
             val action = UserPostsFragmentDirections.actionUserPostsToEditPost(postId)
             findNavController().navigate(action)

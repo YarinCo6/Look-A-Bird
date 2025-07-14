@@ -1,23 +1,23 @@
 package com.example.look_a_bird.ui.myposts
 
-import Post
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ProgressBar
 import android.widget.TextView
-import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.example.look_a_bird.MainActivity
 import com.example.look_a_bird.R
+import com.example.look_a_bird.database.Repository
+import com.example.look_a_bird.model.Post
 import com.example.look_a_bird.ui.adapter.PostAdapter
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.Query
+import kotlinx.coroutines.launch
 
 class MyPostsFragment : Fragment() {
 
@@ -26,8 +26,7 @@ class MyPostsFragment : Fragment() {
     private lateinit var progressBar: ProgressBar
     private lateinit var textNoPosts: TextView
     private lateinit var postAdapter: PostAdapter
-
-    private val db = FirebaseFirestore.getInstance()
+    private lateinit var repository: Repository
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -39,9 +38,14 @@ class MyPostsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        // Initialize repository
+        repository = (requireActivity() as MainActivity).getRepository()
+
         setupViews(view)
         setupRecyclerView()
-        listenForPosts()
+        setupSwipeRefresh()
+        observePosts()
     }
 
     private fun setupViews(view: View) {
@@ -72,36 +76,39 @@ class MyPostsFragment : Fragment() {
         recyclerView.adapter = postAdapter
     }
 
-    private fun listenForPosts() {
-        showLoading(true)
-
-        db.collection("posts")
-            .orderBy("timestamp", Query.Direction.DESCENDING)
-            .addSnapshotListener { snapshots, error ->
-                showLoading(false)
-                swipeRefresh.isRefreshing = false
-
-                if (error != null) {
-                    Toast.makeText(context, "Error loading posts: ${error.message}", Toast.LENGTH_SHORT).show()
-                    updateUI(emptyList())
-                    return@addSnapshotListener
-                }
-
-                val posts = mutableListOf<Pair<String, Post>>()
-                snapshots?.forEach { doc ->
-                    try {
-                        val post = doc.toObject(Post::class.java)
-                        posts.add(Pair(doc.id, post))
-                    } catch (ex: Exception) {
-                        Log.e("MyPostsFragment", "Error parsing post: ${ex.message}")
-                    }
-                }
-
-                updateUI(posts)
-            }
+    private fun setupSwipeRefresh() {
+        swipeRefresh.setOnRefreshListener {
+            refreshPosts()
+        }
     }
 
-    private fun updateUI(posts: List<Pair<String, Post>>) {
+    private fun observePosts() {
+        showLoading(true)
+
+        // Observe all posts from repository
+        repository.getAllPosts().observe(viewLifecycleOwner) { posts ->
+            showLoading(false)
+            swipeRefresh.isRefreshing = false
+            updateUI(posts)
+        }
+    }
+
+    private fun refreshPosts() {
+        swipeRefresh.isRefreshing = true
+
+        lifecycleScope.launch {
+            try {
+                repository.syncPosts()
+                repository.syncUsers()
+            } catch (e: Exception) {
+                // Handle error silently
+            } finally {
+                swipeRefresh.isRefreshing = false
+            }
+        }
+    }
+
+    private fun updateUI(posts: List<Post>) {
         if (posts.isEmpty()) {
             textNoPosts.visibility = View.VISIBLE
             textNoPosts.text = "No bird sightings shared yet.\nBe the first to share!"

@@ -1,6 +1,5 @@
 package com.example.look_a_bird.ui.adapter
 
-import Post
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,7 +9,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.look_a_bird.R
-import com.google.firebase.Timestamp
+import com.example.look_a_bird.model.Post
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -21,15 +20,15 @@ class PostAdapter : RecyclerView.Adapter<PostAdapter.PostViewHolder>() {
         fun onMapClick(latitude: Double, longitude: Double)
     }
 
-    private var posts: List<Pair<String, Post>> = listOf()
+    private var posts: List<Post> = emptyList()
     private var listener: OnItemClickListener? = null
 
-    fun setPosts(posts: List<Pair<String, Post>>) {
+    fun setPosts(posts: List<Post>) {
         this.posts = posts
         notifyDataSetChanged()
     }
 
-    fun getPost(position: Int): Pair<String, Post> = posts[position]
+    fun getPost(position: Int): Post = posts[position]
 
     fun setOnItemClickListener(listener: OnItemClickListener) {
         this.listener = listener
@@ -61,12 +60,12 @@ class PostAdapter : RecyclerView.Adapter<PostAdapter.PostViewHolder>() {
         private val buttonShowOnMap: Button = itemView.findViewById(R.id.button_show_on_map)
 
         init {
-            itemView.setOnClickListener { listener?.onItemClick(adapterPosition) }
+            itemView.setOnClickListener {
+                listener?.onItemClick(adapterPosition)
+            }
         }
 
-        fun bind(item: Pair<String, Post>) {
-            val post = item.second
-
+        fun bind(post: Post) {
             textUserName.text = post.userName
             textTimestamp.text = formatTimestamp(post.timestamp)
             textDescription.text = post.description
@@ -98,10 +97,14 @@ class PostAdapter : RecyclerView.Adapter<PostAdapter.PostViewHolder>() {
             }
         }
 
-        private fun formatTimestamp(timestamp: Timestamp?): String {
-            return timestamp?.let {
-                SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(it.toDate())
-            } ?: "No Date"
+        private fun formatTimestamp(timestamp: Long): String {
+            return if (timestamp > 0) {
+                val sdf = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
+                val date = Date(timestamp * 1000)
+                sdf.format(date)
+            } else {
+                "No Date"
+            }
         }
     }
 }

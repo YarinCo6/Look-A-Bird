@@ -1,6 +1,5 @@
 package com.example.look_a_bird.ui.addpost
 
-import Post
 import android.Manifest
 import android.app.Activity
 import android.content.Intent
@@ -14,10 +13,13 @@ import android.widget.*
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import com.example.look_a_bird.MainActivity
 import com.example.look_a_bird.R
 import com.example.look_a_bird.api.ApiRepository
 import com.example.look_a_bird.api.ApiResult
 import com.example.look_a_bird.api.BirdSpecies
+import com.example.look_a_bird.database.Repository
+import com.example.look_a_bird.model.Post
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.firebase.auth.FirebaseAuth
@@ -41,6 +43,7 @@ class AddPostFragment : Fragment() {
     private val db = FirebaseFirestore.getInstance()
     private val storage = FirebaseStorage.getInstance()
     private val auth = FirebaseAuth.getInstance()
+    private lateinit var repository: Repository
 
     private var selectedImageUri: String = ""
     private var selectedBird: BirdSpecies? = null
@@ -67,6 +70,10 @@ class AddPostFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        // Initialize repository
+        repository = (requireActivity() as MainActivity).getRepository()
+
         setupViews(view)
         setupBirdSearch()
         setupClickListeners()
@@ -146,14 +153,18 @@ class AddPostFragment : Fragment() {
 
     private fun searchBirds(query: String) {
         searchJob?.cancel()
-        searchJob = lifecycleScope.launch { delay(300)
+        searchJob = lifecycleScope.launch {
+            delay(300)
             birdSearchProgress.visibility = View.VISIBLE
+            try {
                 when (val result = apiRepository.searchBirds(query)) {
                     is ApiResult.Success -> updateBirdSuggestions(result.data)
                     is ApiResult.Error -> Toast.makeText(context, "Search error: ${result.message}", Toast.LENGTH_SHORT).show()
                     else -> {}
                 }
-            birdSearchProgress.visibility = View.GONE
+            } finally {
+                birdSearchProgress.visibility = View.GONE
+            }
         }
     }
 
@@ -204,7 +215,7 @@ class AddPostFragment : Fragment() {
                 if (selectedImageUri.isNotEmpty()) {
                     uploadImageAndSavePost(birdName, description, userId, userName, userProfileImage)
                 } else {
-                    savePostToFirestore(birdName, description, userId, userName, userProfileImage, "")
+                    savePostToRepository(birdName, description, userId, userName, userProfileImage, "")
                 }
             }
             .addOnFailureListener { e ->
@@ -230,7 +241,7 @@ class AddPostFragment : Fragment() {
                 storageRef.downloadUrl
             }
             .addOnSuccessListener { downloadUri ->
-                savePostToFirestore(birdName, description, userId, userName, userProfileImage, downloadUri.toString())
+                savePostToRepository(birdName, description, userId, userName, userProfileImage, downloadUri.toString())
             }
             .addOnFailureListener { e ->
                 showLoading(false)
@@ -238,7 +249,7 @@ class AddPostFragment : Fragment() {
             }
     }
 
-    private fun savePostToFirestore(
+    private fun savePostToRepository(
         birdName: String,
         description: String,
         userId: String,
@@ -247,6 +258,7 @@ class AddPostFragment : Fragment() {
         imageUrl: String
     ) {
         val newPost = Post(
+            id = "", // Will be set by Repository
             userId = userId,
             userName = userName,
             userProfileImage = userProfileImage,
@@ -256,20 +268,21 @@ class AddPostFragment : Fragment() {
             imageUrl = imageUrl,
             latitude = currentLatitude,
             longitude = currentLongitude,
-            timestamp = com.google.firebase.Timestamp.now()
+            timestamp = System.currentTimeMillis() / 1000, // Current time in seconds
+            lastUpdated = System.currentTimeMillis() / 1000
         )
 
-        db.collection("posts")
-            .add(newPost)
-            .addOnSuccessListener {
+        lifecycleScope.launch {
+            try {
+                repository.addPost(newPost)
                 showLoading(false)
                 Toast.makeText(context, "Post saved successfully!", Toast.LENGTH_SHORT).show()
                 clearForm()
-            }
-            .addOnFailureListener { e ->
+            } catch (e: Exception) {
                 showLoading(false)
                 Toast.makeText(context, "Error saving post: ${e.message}", Toast.LENGTH_LONG).show()
             }
+        }
     }
 
     private fun validateInput(birdName: String, description: String): Boolean {
