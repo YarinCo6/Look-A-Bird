@@ -145,7 +145,11 @@ class EditPostFragment : Fragment() {
             try {
                 when (val result = apiRepository.searchBirds(query)) {
                     is ApiResult.Success -> updateBirdSuggestions(result.data)
-                    is ApiResult.Error -> Toast.makeText(context, "Search error: ${result.message}", Toast.LENGTH_SHORT).show()
+                    is ApiResult.Error -> {
+                        if (result.message?.contains("cancel", ignoreCase = true) != true) {
+                            Toast.makeText(context, "Search error: ${result.message}", Toast.LENGTH_SHORT).show()
+                        }
+                    }
                     else -> {}
                 }
             } catch (e: Exception) {
