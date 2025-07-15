@@ -3,7 +3,7 @@ package com.example.look_a_bird
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import androidx.navigation.findNavController
+import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.NavigationUI
 import com.example.look_a_bird.database.Repository
 import com.example.look_a_bird.databinding.ActivityMainBinding
@@ -37,27 +37,29 @@ class MainActivity : AppCompatActivity() {
         // Setup Navigation
         setupNavigation()
 
-        // Check authentication status
-        checkAuthenticationStatus()
+        // Navigate if needed
+        navigateToStartDestination()
 
         // Start background sync
         startBackgroundSync()
     }
 
     private fun setupNavigation() {
-        val navController = findNavController(R.id.nav_host_fragment)
+        val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+        val navController = navHostFragment.navController
         val bottomNavigationView = findViewById<BottomNavigationView>(R.id.bottom_navigation)
         NavigationUI.setupWithNavController(bottomNavigationView, navController)
     }
 
-    private fun checkAuthenticationStatus() {
-        val navController = findNavController(R.id.nav_host_fragment)
+    private fun navigateToStartDestination() {
+        val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+        val navController = navHostFragment.navController
         val currentUser = auth.currentUser
+        val currentDest = navController.currentDestination?.id
 
-        if (currentUser != null) {
-            // Use valid fragment ID from nav_graph.xml
+        if (currentUser != null && currentDest == R.id.loginFragment) {
             navController.navigate(R.id.homeFragment)
-        } else {
+        } else if (currentUser == null && currentDest == R.id.homeFragment) {
             navController.navigate(R.id.loginFragment)
         }
     }

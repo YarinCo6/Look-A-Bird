@@ -7,7 +7,8 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.bumptech.glide.Glide
+import coil.load
+import coil.transform.CircleCropTransformation
 import com.example.look_a_bird.R
 import com.example.look_a_bird.model.Post
 import java.text.SimpleDateFormat
@@ -86,11 +87,15 @@ class PostAdapter : RecyclerView.Adapter<PostAdapter.PostViewHolder>() {
 
         private fun loadImage(imageUrl: String, imageView: ImageView, centerCrop: Boolean) {
             if (imageUrl.isNotEmpty()) {
-                val glideRequest = Glide.with(itemView.context).load(imageUrl)
-                if (centerCrop) {
-                    glideRequest.centerCrop().into(imageView)
-                } else {
-                    glideRequest.circleCrop().into(imageView)
+                imageView.load(imageUrl) {
+                    crossfade(true)
+                    placeholder(android.R.drawable.ic_menu_gallery)
+                    error(android.R.drawable.ic_menu_gallery)
+                    if (centerCrop) {
+                        scale(coil.size.Scale.FILL)
+                    } else {
+                        transformations(CircleCropTransformation())
+                    }
                 }
             } else {
                 imageView.setImageDrawable(null)

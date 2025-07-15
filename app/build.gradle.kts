@@ -3,7 +3,7 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("androidx.navigation.safeargs.kotlin")
     id("com.google.gms.google-services")
-    id("kotlin-kapt")
+    id("com.google.devtools.ksp") version "1.9.24-1.0.20"
 }
 
 android {
@@ -67,12 +67,16 @@ dependencies {
 
     val roomVersion = "2.6.1"
     implementation("androidx.room:room-runtime:$roomVersion")
-    kapt("androidx.room:room-compiler:$roomVersion")
+    ksp("androidx.room:room-compiler:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
 
-    implementation("com.github.bumptech.glide:glide:4.16.0")
-    annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
-    implementation("com.squareup.picasso:picasso:2.8")
+    // Removed Glide and Picasso
+    // implementation("com.github.bumptech.glide:glide:4.16.0")
+    // annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
+    // implementation("com.squareup.picasso:picasso:2.8")
+
+    // Added Coil
+    implementation("io.coil-kt:coil:2.6.0")
 
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
 

@@ -39,19 +39,16 @@ class PostMapFragment : Fragment(), OnMapReadyCallback {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Setup map
         val mapFragment = childFragmentManager
             .findFragmentById(R.id.mapView) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
-        // Setup back button
         setupBackButton(view)
     }
 
     private fun setupBackButton(view: View) {
         fabBack = view.findViewById(R.id.fab_back)
         fabBack.setOnClickListener {
-            // Navigate back to previous screen
             findNavController().navigateUp()
         }
     }

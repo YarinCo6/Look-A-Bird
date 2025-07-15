@@ -60,7 +60,6 @@ class MyPostsFragment : Fragment() {
 
         postAdapter.setOnItemClickListener(object : PostAdapter.OnItemClickListener {
             override fun onItemClick(position: Int) {
-                // No action - general feed posts are not clickable
             }
 
             override fun onMapClick(latitude: Double, longitude: Double) {
@@ -101,7 +100,7 @@ class MyPostsFragment : Fragment() {
                 repository.syncPosts()
                 repository.syncUsers()
             } catch (e: Exception) {
-                // Handle error silently
+                // handle error silently
             } finally {
                 swipeRefresh.isRefreshing = false
             }

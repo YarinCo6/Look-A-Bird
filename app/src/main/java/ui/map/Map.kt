@@ -11,7 +11,6 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import androidx.navigation.fragment.findNavController
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -93,27 +92,4 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             }
     }
 
-    private fun openAddPost() {
-        val fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
-
-        if (ContextCompat.checkSelfPermission(
-                requireContext(),
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-        ) {
-            fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                if (location != null) {
-                    val action = MapFragmentDirections.actionMapFragmentToAddPostFragment(
-                        latitude = location.latitude.toFloat(),
-                        longitude = location.longitude.toFloat()
-                    )
-                    findNavController().navigate(action)
-                } else {
-                    Toast.makeText(context, "Could not get current location", Toast.LENGTH_SHORT).show()
-                }
-            }
-        } else {
-            Toast.makeText(context, "Location permission not granted", Toast.LENGTH_SHORT).show()
-        }
-    }
 }

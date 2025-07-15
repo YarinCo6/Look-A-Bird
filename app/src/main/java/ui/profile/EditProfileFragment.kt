@@ -14,7 +14,8 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
-import com.bumptech.glide.Glide
+import coil.load
+import coil.transform.CircleCropTransformation
 import com.example.look_a_bird.R
 import com.example.look_a_bird.model.User
 import com.google.android.material.textfield.TextInputEditText
@@ -51,12 +52,10 @@ class EditProfileFragment : Fragment() {
             result.data?.data?.let { uri ->
                 selectedImageUri = uri
                 isImageChanged = true
-                // Display selected image with Glide
-                Glide.with(this)
-                    .load(uri)
-                    .placeholder(android.R.drawable.ic_menu_gallery)
-                    .circleCrop()
-                    .into(imageProfile)
+                imageProfile.load(uri) {
+                    placeholder(android.R.drawable.ic_menu_gallery)
+                    transformations(CircleCropTransformation())
+                }
             }
         }
     }
@@ -143,12 +142,11 @@ class EditProfileFragment : Fragment() {
             editTextEmail.setText(user.email)
 
             if (user.profileImageUrl.isNotEmpty()) {
-                Glide.with(this)
-                    .load(user.profileImageUrl)
-                    .placeholder(android.R.drawable.ic_menu_gallery)
-                    .error(android.R.drawable.ic_menu_gallery)
-                    .circleCrop()
-                    .into(imageProfile)
+                imageProfile.load(user.profileImageUrl) {
+                    placeholder(android.R.drawable.ic_menu_gallery)
+                    error(android.R.drawable.ic_menu_gallery)
+                    transformations(CircleCropTransformation())
+                }
             }
         }
     }

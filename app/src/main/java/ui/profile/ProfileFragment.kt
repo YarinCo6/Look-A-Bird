@@ -11,7 +11,8 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
-import com.bumptech.glide.Glide
+import coil.load
+import coil.transform.CircleCropTransformation
 import com.example.look_a_bird.R
 import com.example.look_a_bird.model.User
 import com.google.firebase.auth.FirebaseAuth
@@ -150,12 +151,11 @@ class ProfileFragment : Fragment() {
 
     private fun loadProfileImage(imageUrl: String) {
         if (imageUrl.isNotEmpty()) {
-            Glide.with(this)
-                .load(imageUrl)
-                .placeholder(android.R.drawable.ic_menu_gallery)
-                .error(android.R.drawable.ic_menu_gallery)
-                .circleCrop()
-                .into(imageProfilePicture)
+            imageProfilePicture.load(imageUrl) {
+                placeholder(android.R.drawable.ic_menu_gallery)
+                error(android.R.drawable.ic_menu_gallery)
+                transformations(CircleCropTransformation())
+            }
         } else {
             imageProfilePicture.setImageResource(android.R.drawable.ic_menu_gallery)
         }

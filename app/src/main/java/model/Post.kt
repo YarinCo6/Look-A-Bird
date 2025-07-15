@@ -21,7 +21,7 @@ data class Post(
     var timestamp: Long = 0L,
     var lastUpdated: Long = 0L
 ) {
-    // Convert to Firebase format
+    // convert to Firebase format
     fun toMap(): Map<String, Any?> {
         return hashMapOf(
             "userId" to userId,
@@ -39,7 +39,7 @@ data class Post(
     }
 
     companion object {
-        // Convert from Firebase to Room format
+        // convert from Firebase to Room format
         fun fromFirestore(id: String, data: Map<String, Any?>): Post {
             return Post(
                 id = id,

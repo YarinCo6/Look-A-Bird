@@ -43,7 +43,7 @@
             app:popUpToInclusive="true" />
     </fragment>
 
-    <!-- Home Fragment - Main screen -->
+    <!-- Home Fragment -->
     <fragment
         android:id="@+id/homeFragment"
         android:name="com.example.look_a_bird.ui.home.HomeFragment"
@@ -59,7 +59,7 @@
             app:destination="@id/profileFragment" />
     </fragment>
 
-    <!-- My Posts Fragment (NOW SHOWS ALL POSTS) -->
+    <!-- My Posts Fragment  -->
     <fragment
         android:id="@+id/myPostsFragment"
         android:name="com.example.look_a_bird.ui.myposts.MyPostsFragment"
@@ -70,7 +70,6 @@
             android:id="@+id/action_my_posts_to_edit_post"
             app:destination="@id/editPostFragment">
 
-            <!-- Safe Args - pass post ID -->
             <argument
                 android:name="postId"
                 app:argType="string" />
@@ -85,7 +84,7 @@
             app:destination="@id/addPostFragment" />
     </fragment>
 
-    <!-- NEW: User Posts Fragment (ONLY USER'S POSTS) -->
+    <!-- User Posts Fragment  -->
     <fragment
         android:id="@+id/userPostsFragment"
         android:name="com.example.look_a_bird.ui.profile.UserPostsFragment"
@@ -104,7 +103,6 @@
             android:id="@+id/action_user_posts_to_add_post"
             app:destination="@id/addPostFragment" />
 
-        <!-- ✅ ADD THIS ACTION -->
         <action
             android:id="@+id/action_user_posts_to_post_map"
             app:destination="@id/postMapFragment">
@@ -143,7 +141,6 @@
         android:label="Edit Post"
         tools:layout="@layout/fragment_edit_post">
 
-        <!-- Arguments this fragment receives -->
         <argument
             android:name="postId"
             app:argType="string"
@@ -161,7 +158,6 @@
             android:id="@+id/action_profile_to_edit_profile"
             app:destination="@id/editProfileFragment" />
 
-        <!-- UPDATED: Navigate to User Posts instead of My Posts -->
         <action
             android:id="@+id/action_profile_to_user_posts"
             app:destination="@id/userPostsFragment" />
@@ -185,7 +181,6 @@
             app:destination="@id/addPostFragment" />
     </fragment>
 
-    <!-- Global Actions - accessible from anywhere -->
     <action
         android:id="@+id/action_global_home"
         app:destination="@id/homeFragment" />

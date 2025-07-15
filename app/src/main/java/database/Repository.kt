@@ -17,12 +17,11 @@ class Repository private constructor(
     private val firestore = FirebaseFirestore.getInstance()
     private val prefs: SharedPreferences = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
 
-    // Local data access
     fun getAllPosts(): LiveData<List<Post>> = postDao.getAllPosts()
     fun getPostsByUser(userId: String): LiveData<List<Post>> = postDao.getPostsByUser(userId)
     fun getUserById(userId: String): LiveData<User?> = userDao.getUserByIdLive(userId)
 
-    // Sync with Firebase
+    // sync with Firebase
     suspend fun syncPosts() {
         try {
             val lastUpdate = getLastPostUpdateTime()
@@ -71,12 +70,10 @@ class Repository private constructor(
 
     suspend fun addPost(post: Post) {
         try {
-            // Add to Firebase first
             val docRef = firestore.collection("posts").document()
             post.id = docRef.id
             docRef.set(post.toMap()).await()
 
-            // Add to local database
             post.lastUpdated = System.currentTimeMillis() / 1000
             postDao.insertPost(post)
         } catch (e: Exception) {
@@ -86,11 +83,9 @@ class Repository private constructor(
 
     suspend fun updatePost(post: Post) {
         try {
-            // Update Firebase first
             firestore.collection("posts").document(post.id)
                 .set(post.toMap()).await()
 
-            // Update local database
             post.lastUpdated = System.currentTimeMillis() / 1000
             postDao.updatePost(post)
         } catch (e: Exception) {
@@ -100,31 +95,14 @@ class Repository private constructor(
 
     suspend fun deletePost(postId: String) {
         try {
-            // Delete from Firebase first
             firestore.collection("posts").document(postId).delete().await()
 
-            // Delete from local database
             postDao.deletePostById(postId)
         } catch (e: Exception) {
             // Handle error
         }
     }
 
-    suspend fun updateUser(user: User) {
-        try {
-            // Update Firebase first
-            firestore.collection("users").document(user.id)
-                .set(user.toMap()).await()
-
-            // Update local database
-            user.lastUpdated = System.currentTimeMillis() / 1000
-            userDao.updateUser(user)
-        } catch (e: Exception) {
-            // Handle error
-        }
-    }
-
-    // SharedPreferences helpers
     private fun getLastPostUpdateTime(): Long {
         return prefs.getLong("last_post_update", 0L)
     }

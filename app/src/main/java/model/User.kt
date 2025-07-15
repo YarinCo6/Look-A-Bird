@@ -15,7 +15,7 @@ data class User(
     var memberSince: Long = 0L,
     var lastUpdated: Long = 0L
 ) {
-    // Convert to Firebase format
+    // convert to Firebase format
     fun toMap(): Map<String, Any?> {
         return hashMapOf(
             "name" to name,
@@ -27,7 +27,7 @@ data class User(
     }
 
     companion object {
-        // Convert from Firebase to Room format
+        // convert from Firebase to Room format
         fun fromFirestore(id: String, data: Map<String, Any?>): User {
             return User(
                 id = id,

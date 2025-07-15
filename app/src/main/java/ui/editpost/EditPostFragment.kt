@@ -9,7 +9,7 @@ import android.widget.*
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
-import com.bumptech.glide.Glide
+import coil.load
 import com.example.look_a_bird.MainActivity
 import com.example.look_a_bird.R
 import com.example.look_a_bird.api.ApiRepository
@@ -209,10 +209,11 @@ class EditPostFragment : Fragment() {
             }
 
             if (post.imageUrl.isNotEmpty()) {
-                Glide.with(this)
-                    .load(post.imageUrl)
-                    .centerCrop()
-                    .into(imagePostPreview)
+                imagePostPreview.load(post.imageUrl) {
+                    placeholder(android.R.drawable.ic_menu_gallery)
+                    crossfade(true)
+                    error(android.R.drawable.ic_menu_gallery)
+                }
             }
         }
     }
@@ -230,10 +231,10 @@ class EditPostFragment : Fragment() {
             data?.data?.let { uri ->
                 selectedImageUri = uri
                 isImageChanged = true
-                Glide.with(this)
-                    .load(uri)
-                    .centerCrop()
-                    .into(imagePostPreview)
+                imagePostPreview.load(uri) {
+                    placeholder(android.R.drawable.ic_menu_gallery)
+                    crossfade(true)
+                }
             }
         }
     }

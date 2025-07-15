@@ -44,7 +44,6 @@ class UserPostsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Initialize repository
         repository = (requireActivity() as MainActivity).getRepository()
 
         setupViews(view)
@@ -66,13 +65,11 @@ class UserPostsFragment : Fragment() {
 
         postAdapter.setOnItemClickListener(object : PostAdapter.OnItemClickListener {
             override fun onItemClick(position: Int) {
-                // Navigate to edit post
                 val post = postAdapter.getPost(position)
                 navigateToEditPost(post.id)
             }
 
             override fun onMapClick(latitude: Double, longitude: Double) {
-                // Navigate to map
                 try {
                     val action = UserPostsFragmentDirections.actionUserPostsToPostMap(
                         latitude.toFloat(),
@@ -104,7 +101,6 @@ class UserPostsFragment : Fragment() {
 
         showLoading(true)
 
-        // Observe user's posts from repository
         repository.getPostsByUser(currentUser.uid).observe(viewLifecycleOwner) { posts ->
             showLoading(false)
             swipeRefresh.isRefreshing = false

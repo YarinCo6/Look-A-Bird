@@ -71,7 +71,6 @@ class AddPostFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Initialize repository
         repository = (requireActivity() as MainActivity).getRepository()
 
         setupViews(view)
@@ -258,7 +257,7 @@ class AddPostFragment : Fragment() {
         imageUrl: String
     ) {
         val newPost = Post(
-            id = "", // Will be set by Repository
+            id = "",
             userId = userId,
             userName = userName,
             userProfileImage = userProfileImage,
@@ -268,7 +267,7 @@ class AddPostFragment : Fragment() {
             imageUrl = imageUrl,
             latitude = currentLatitude,
             longitude = currentLongitude,
-            timestamp = System.currentTimeMillis() / 1000, // Current time in seconds
+            timestamp = System.currentTimeMillis() / 1000,
             lastUpdated = System.currentTimeMillis() / 1000
         )
 

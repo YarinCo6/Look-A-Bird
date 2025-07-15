@@ -76,7 +76,6 @@
             app:layout_constraintEnd_toStartOf="@id/button_show_on_map" />
 
 
-        <!-- Location oval button -->
         <Button
             android:id="@+id/button_show_on_map"
             android:layout_width="wrap_content"
