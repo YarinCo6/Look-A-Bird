@@ -9,7 +9,6 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
-import androidx.navigation.fragment.navArgs
 import coil.load
 import com.example.look_a_bird.MainActivity
 import com.example.look_a_bird.R
@@ -164,6 +163,6 @@ class PostMapFragment : Fragment(), OnMapReadyCallback {
             .setTitle(post.userName)
             .setView(dialogView)
             .setPositiveButton("Close", null)
-            .show()
-    }
+            .show()
+    }
 }
