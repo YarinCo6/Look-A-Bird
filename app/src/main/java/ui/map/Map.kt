@@ -1,6 +1,5 @@
 package com.example.look_a_bird.ui.map
 
-import Post
 import android.Manifest
 import android.content.pm.PackageManager
 import android.location.Location
@@ -14,9 +13,13 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
-import com.bumptech.glide.Glide
+import coil.load
+import com.example.look_a_bird.MainActivity
 import com.example.look_a_bird.R
+import com.example.look_a_bird.database.Repository
+import com.example.look_a_bird.model.Post
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -24,12 +27,12 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
-import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.launch
 
 class MapFragment : Fragment(), OnMapReadyCallback {
 
     private lateinit var googleMap: GoogleMap
-    private val db = FirebaseFirestore.getInstance()
+    private lateinit var repository: Repository
 
     private val locationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -39,6 +42,11 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         } else {
             Toast.makeText(context, "Location permission denied", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        repository = (requireActivity() as MainActivity).getRepository()
     }
 
     override fun onCreateView(
@@ -76,8 +84,6 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     }
 
     private fun centerMapOnLastLocation() {
-        val fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
-
         if (ContextCompat.checkSelfPermission(
                 requireContext(),
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -86,45 +92,49 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             return
         }
 
+        val fusedLocationClient = LocationServices
+            .getFusedLocationProviderClient(requireActivity())
+
         fusedLocationClient.lastLocation
             .addOnSuccessListener { location: Location? ->
-                location?.let {
-                    val userLatLng = LatLng(it.latitude, it.longitude)
-                    googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(userLatLng, 14f))
+                if (location != null) {
+                    val userLatLng = LatLng(location.latitude, location.longitude)
+                    googleMap.animateCamera(
+                        CameraUpdateFactory.newLatLngZoom(userLatLng, 14f)
+                    )
                 }
             }
     }
 
     private fun loadAllPosts() {
-        db.collection("posts")
-            .get()
-            .addOnSuccessListener { documents ->
-                for (doc in documents) {
-                    try {
-                        val post = doc.toObject(Post::class.java)
-                        val location = LatLng(post.latitude, post.longitude)
-                        val marker = googleMap.addMarker(
-                            MarkerOptions()
-                                .position(location)
-                                .title(post.birdSpecies)
-                        )
-                        marker?.tag = post
-                    } catch (e: Exception) {
-                        e.printStackTrace()
+        lifecycleScope.launch {
+            try {
+                // Using Repository instead of direct Firebase
+                repository.getAllPosts().observe(viewLifecycleOwner) { posts ->
+                    for (post in posts) {
+                        if (post.latitude != 0.0 && post.longitude != 0.0) {
+                            val location = LatLng(post.latitude, post.longitude)
+                            val marker = googleMap.addMarker(
+                                MarkerOptions()
+                                    .position(location)
+                                    .title(post.birdSpecies)
+                            )
+                            marker?.tag = post
+                        }
                     }
-                }
 
-                googleMap.setOnMarkerClickListener { marker ->
-                    val post = marker.tag as? Post
-                    post?.let {
-                        showPostPopup(it)
+                    googleMap.setOnMarkerClickListener { marker ->
+                        val post = marker.tag as? Post
+                        post?.let {
+                            showPostPopup(it)
+                        }
+                        true
                     }
-                    true
                 }
-            }
-            .addOnFailureListener { e ->
+            } catch (e: Exception) {
                 Toast.makeText(context, "Error loading posts: ${e.message}", Toast.LENGTH_SHORT).show()
             }
+        }
     }
 
     private fun showPostPopup(post: Post) {
@@ -139,11 +149,12 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         scientificText.text = post.scientificName
         descriptionText.text = post.description
 
-        Glide.with(this)
-            .load(post.imageUrl)
-            .placeholder(android.R.drawable.ic_menu_report_image) // default placeholder
-            .error(android.R.drawable.stat_notify_error)          // default error icon
-            .into(imageView)
+        // Using Coil instead of Glide
+        imageView.load(post.imageUrl) {
+            placeholder(android.R.drawable.ic_menu_report_image)
+            error(android.R.drawable.stat_notify_error)
+            crossfade(true)
+        }
 
         androidx.appcompat.app.AlertDialog.Builder(requireContext())
             .setTitle(post.userName)
@@ -173,6 +184,6 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             }
         } else {
             Toast.makeText(context, "Location permission not granted", Toast.LENGTH_SHORT).show()
-        }
-    }
+        }
+    }
 }
